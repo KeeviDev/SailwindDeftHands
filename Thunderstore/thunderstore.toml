@@ -1,0 +1,33 @@
+[config]
+schemaVersion = "0.0.1"
+
+[package]
+namespace = "Keevi"
+name = "DeftHands"
+versionNumber = "1.0.0"
+description = "QoL mod that gives you intuitive mouse-drag item rotation for Sailwind, with weighty inertia and smooth scroll push/pull."
+websiteUrl = "https://github.com/KeeviDev/SailwindDeftHands"
+containsNsfwContent = false
+
+[package.dependencies]
+BepInEx-BepInExPack = "5.4.2305"
+
+[build]
+icon = "../attachments/icon.png"
+readme = "../README.md"
+outdir = "../bin/Publish"
+
+[[build.copy]]
+source = "../bin/Release/DeftHands.dll"
+target = "DeftHands/DeftHands.dll"
+
+[[build.copy]]
+source = "../CHANGELOG.md"
+target = "CHANGELOG.md"
+
+[publish]
+repository = "https://thunderstore.io"
+communities = ["sailwind"]
+
+[publish.categories]
+sailwind = ["mods"]

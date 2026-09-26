@@ -4,7 +4,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "Keevi"
 name = "DeftHands"
-versionNumber = "1.0.0"
+versionNumber = "1.1.0"
 description = "QoL mod that gives you intuitive mouse-drag item rotation for Sailwind, with weighty inertia and smooth scroll push/pull."
 websiteUrl = "https://github.com/KeeviDev/SailwindDeftHands"
 containsNsfwContent = false

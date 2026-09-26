@@ -17,7 +17,7 @@ namespace DeftHands
     {
         public const string PLUGIN_GUID = "com.keevi.defthands";
         public const string PLUGIN_NAME = "Deft Hands";
-        public const string PLUGIN_VERSION = "1.0.0";
+        public const string PLUGIN_VERSION = "1.1.0";
 
         internal static ManualLogSource Log { get; private set; }
 

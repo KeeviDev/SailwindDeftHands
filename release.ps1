@@ -9,8 +9,9 @@ GitHub and Thunderstore zips into bin/Publish. CHANGELOG.md must already have a 
 for the version.
 
 With -Publish: builds and packages the current version, then creates the GitHub release
-and uploads the package to Thunderstore. Requires a clean working tree whose HEAD is
-pushed to origin/master, and a Thunderstore token in bin/thunderstore.token or the
+and uploads the package to Thunderstore, skipping whichever of the two already has this
+version, so a failed publish can simply be re-run. Requires a clean working tree whose HEAD
+is pushed to origin/master, and a Thunderstore token in bin/thunderstore.token or the
 THUNDERSTORE_TOKEN environment variable.
 
 .PARAMETER Version
@@ -58,21 +59,37 @@ $VersionPatterns = [ordered]@{
     $TomlFile         = '(?m)(^versionNumber\s*=\s*")(\d+\.\d+\.\d+)(")'
 }
 
+<#
+.SYNOPSIS
+Runs an external program attached directly to the console, so programs that redraw progress
+in place keep working. Throws if it exits with a non-zero code; the error names only the
+program and its subcommand, never the remaining arguments.
+#>
 function Invoke-Checked {
+    param([string]$FilePath, [string[]]$Arguments)
+
+    $quotedArguments = $Arguments | ForEach-Object {
+        if ($_ -eq '' -or $_ -match '[\s"]') { '"' + $_.Replace('"', '\"') + '"' } else { $_ }
+    }
+    $process = Start-Process -FilePath (Get-Command $FilePath).Source -ArgumentList $quotedArguments -NoNewWindow -Wait -PassThru
+
+    if ($process.ExitCode -ne 0) {
+        throw "'$(Split-Path -Leaf $FilePath) $($Arguments[0])' failed with exit code $($process.ExitCode)."
+    }
+}
+
+function Test-CommandSucceeds {
     param([string]$FilePath, [string[]]$Arguments)
 
     $previousPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
-        & $FilePath @Arguments | Out-Host
+        & $FilePath @Arguments *> $null
     }
     finally {
         $ErrorActionPreference = $previousPreference
     }
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "'$FilePath $($Arguments -join ' ')' failed with exit code $LASTEXITCODE."
-    }
+    return $LASTEXITCODE -eq 0
 }
 
 function Get-FileVersions {
@@ -239,9 +256,13 @@ function Get-ThunderstoreToken {
     throw "No Thunderstore token: put it in $TokenFile or the THUNDERSTORE_TOKEN environment variable."
 }
 
+<#
+.SYNOPSIS
+Checks that the local release commit matches what's on GitHub and that gh uses the right account.
+.OUTPUTS
+The HEAD commit hash.
+#>
 function Assert-ReadyToPublish {
-    param([string]$ForVersion)
-
     $account = (& gh api user --jq .login)
     if ($account -ne $GitHubAccount) {
         throw "gh is logged in as '$account', expected '$GitHubAccount'. Run: gh auth switch -u $GitHubAccount"
@@ -258,22 +279,72 @@ function Assert-ReadyToPublish {
         throw "HEAD is not origin/$ReleaseBranch. Check out $ReleaseBranch and push it first."
     }
 
-    if (& git -C $Root ls-remote --tags origin "refs/tags/v$ForVersion") {
-        throw "Tag v$ForVersion already exists on origin."
+    Get-ThunderstoreToken | Out-Null
+    return $head
+}
+
+<#
+.SYNOPSIS
+Returns the commit the version's tag points to on origin, or $null if there's no such tag.
+#>
+function Get-RemoteTagCommit {
+    param([string]$ForVersion)
+
+    $tagPattern = '\srefs/tags/v' + [regex]::Escape($ForVersion) + '(\^\{\})?$'
+    $refs = @(& git -C $Root ls-remote --tags origin | Where-Object { $_ -match $tagPattern })
+    if ($refs.Count -eq 0) {
+        return $null
     }
 
-    Get-ThunderstoreToken | Out-Null
+    $peeled = $refs | Where-Object { $_ -match '\^\{\}$' } | Select-Object -First 1
+    $ref = if ($peeled) { $peeled } else { $refs[0] }
+    return ($ref -split '\s+')[0]
+}
+
+<#
+.SYNOPSIS
+Returns whether the version's GitHub release already exists. Throws if its tag exists but
+points to a different commit than the one being released.
+#>
+function Test-GitHubReleaseExists {
+    param([string]$ForVersion, [string]$ReleaseCommit)
+
+    $tagCommit = Get-RemoteTagCommit $ForVersion
+    if (-not $tagCommit) {
+        return $false
+    }
+    if ($tagCommit -ne $ReleaseCommit) {
+        throw "Tag v$ForVersion already exists on origin at a different commit ($tagCommit)."
+    }
+    return Test-CommandSucceeds gh @('release', 'view', "v$ForVersion", '--repo', $GitHubRepo)
+}
+
+function Test-ThunderstoreVersionExists {
+    param([string]$ForVersion)
+
+    $namespace, $name = $ThunderstorePackage.Split('-', 2)
+    $url = "https://thunderstore.io/api/experimental/package/$namespace/$name/$ForVersion/"
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    try {
+        Invoke-WebRequest -Uri $url -UseBasicParsing | Out-Null
+        return $true
+    }
+    catch [Net.WebException] {
+        if ($_.Exception.Response -and [int]$_.Exception.Response.StatusCode -eq 404) {
+            return $false
+        }
+        throw
+    }
 }
 
 function Publish-GitHubRelease {
-    param([string]$ForVersion, [string]$ZipPath, [string]$Notes)
+    param([string]$ForVersion, [string]$ReleaseCommit, [string]$ZipPath, [string]$Notes)
 
     $notesFile = [IO.Path]::GetTempFileName()
     try {
         [IO.File]::WriteAllText($notesFile, $Notes, (New-Object Text.UTF8Encoding($false)))
-        $target = (& git -C $Root rev-parse HEAD)
         Invoke-Checked gh @('release', 'create', "v$ForVersion", $ZipPath,
-            '--repo', $GitHubRepo, '--target', $target,
+            '--repo', $GitHubRepo, '--target', $ReleaseCommit,
             '--title', "Deft Hands $ForVersion", '--notes-file', $notesFile)
     }
     finally {
@@ -281,32 +352,58 @@ function Publish-GitHubRelease {
     }
 }
 
+<#
+.SYNOPSIS
+Uploads the package to Thunderstore, passing the token through the environment so it never
+appears on a command line or in an error message.
+#>
 function Publish-Thunderstore {
     param([string]$ZipPath)
 
-    Invoke-Checked (Get-Tcli) @('publish', '--config-path', $TomlFile, '--file', $ZipPath, '--token', (Get-ThunderstoreToken))
+    $previousToken = $env:TCLI_AUTH_TOKEN
+    $env:TCLI_AUTH_TOKEN = Get-ThunderstoreToken
+    try {
+        Invoke-Checked (Get-Tcli) @('publish', '--config-path', $TomlFile, '--file', $ZipPath)
+    }
+    finally {
+        $env:TCLI_AUTH_TOKEN = $previousToken
+    }
 }
 
 if ($Publish) {
     $releaseVersion = Get-CurrentVersion
     Assert-VersionsInSync $releaseVersion
     $notes = Get-RequiredChangelogSection $releaseVersion
-    Assert-ReadyToPublish $releaseVersion
+    $releaseCommit = Assert-ReadyToPublish
+
+    $needsGitHub = -not (Test-GitHubReleaseExists $releaseVersion $releaseCommit)
+    $needsThunderstore = -not (Test-ThunderstoreVersionExists $releaseVersion)
+    $targets = @()
+    if ($needsGitHub) { $targets += "GitHub ($GitHubRepo)" }
+    if ($needsThunderstore) { $targets += "Thunderstore ($ThunderstorePackage)" }
+    if ($targets.Count -eq 0) {
+        Write-Host "v$releaseVersion is already published on GitHub and Thunderstore."
+        return
+    }
 
     Invoke-Build
     $packages = New-Packages $releaseVersion
 
     if (-not $Yes) {
-        $answer = Read-Host "Publish v$releaseVersion to GitHub ($GitHubRepo) and Thunderstore ($ThunderstorePackage)? [y/N]"
+        $answer = Read-Host "Publish v$releaseVersion to $($targets -join ' and ')? [y/N]"
         if ($answer -notmatch '^(y|yes)$') {
             Write-Host 'Cancelled.'
             return
         }
     }
 
-    Publish-GitHubRelease $releaseVersion $packages.GitHub $notes
-    Publish-Thunderstore $packages.Thunderstore
-    Write-Host "Published v$releaseVersion."
+    if ($needsGitHub) {
+        Publish-GitHubRelease $releaseVersion $releaseCommit $packages.GitHub $notes
+    }
+    if ($needsThunderstore) {
+        Publish-Thunderstore $packages.Thunderstore
+    }
+    Write-Host "Published v$releaseVersion to $($targets -join ' and ')."
 }
 else {
     if (-not $Version) {

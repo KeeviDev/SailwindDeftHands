@@ -43,6 +43,9 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Rotation sensitivity | 2 | How fast items turn (0.5–10). |
 | Alternative rotation axis | Off | Left/right turns big items around the vertical axis instead of rolling them. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the axis above. |
+| Invert vertical | Off | Reverses which way up/down movement tilts the item. |
+| Invert roll | Off | Reverses left/right rolling of big items. |
+| Invert turn | Off | Reverses left/right turning of big items on the alternative axis. |
 | Push/pull on scroll wheel | On | Scroll moves the held item closer or farther. |
 | Legacy rotation control | On | Keeps the game's original scroll rotation around. |
 | Rotation inertia | On | Heavy items take a moment to spin up and drift to a stop. |

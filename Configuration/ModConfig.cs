@@ -9,6 +9,7 @@ namespace DeftHands.Configuration
     internal static class ModConfig
     {
         private const string HeldItemControlSection = "Held Item Control";
+        private const string AxisInversionSection = "Axis Inversion";
         private const string WeightSimulationSection = "Weight Simulation";
 
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
@@ -18,6 +19,9 @@ namespace DeftHands.Configuration
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
+        public static ConfigEntry<bool> InvertVertical { get; private set; }
+        public static ConfigEntry<bool> InvertRoll { get; private set; }
+        public static ConfigEntry<bool> InvertTurn { get; private set; }
         public static ConfigEntry<bool> RotationInertiaEnabled { get; private set; }
         public static ConfigEntry<RotationWeightPreset> WeightPreset { get; private set; }
 
@@ -79,6 +83,28 @@ namespace DeftHands.Configuration
                     "While held together with the Rotation Activation Key, temporarily swaps which axis " +
                     "left/right mouse movement rotates big items around, overriding Alternative Rotation " +
                     "Axis for as long as it's held."));
+
+            InvertVertical = config.Bind(
+                AxisInversionSection,
+                "Invert vertical",
+                false,
+                new ConfigDescription(
+                    "Reverses which way up/down mouse movement tilts the held item."));
+
+            InvertRoll = config.Bind(
+                AxisInversionSection,
+                "Invert roll",
+                false,
+                new ConfigDescription(
+                    "Reverses which way left/right mouse movement rolls items."));
+
+            InvertTurn = config.Bind(
+                AxisInversionSection,
+                "Invert turn",
+                false,
+                new ConfigDescription(
+                    "Reverses which way left/right mouse movement turns items around the vertical axis " +
+                    "(Alternative Rotation Axis, or while holding the Axis Swap Key)."));
 
             RotationInertiaEnabled = config.Bind(
                 WeightSimulationSection,

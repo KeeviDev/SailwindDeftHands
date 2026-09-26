@@ -1,3 +1,4 @@
+using BepInEx.Configuration;
 using DeftHands.Compat;
 using DeftHands.Configuration;
 using DeftHands.Utils;
@@ -175,32 +176,41 @@ namespace DeftHands.Runtime
 
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
+            float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
+            float hookSwingInput = ApplyInversion(horizontalInput, ModConfig.InvertRoll);
 
-            HooksHangMoreCompat.AddHookSwing(currentItem, -horizontalInput * singleAxisSensitivity);
+            HooksHangMoreCompat.AddHookSwing(currentItem, -hookSwingInput * singleAxisSensitivity);
 
             if (currentItem.big)
-                RotateBigItem(currentItem, mainCamera, horizontalInput, verticalInput, sensitivity);
+                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity);
             else if (currentItem is ShipItemQuadrant)
-                RotateQuadrant(verticalInput * singleAxisSensitivity);
+                RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
-                currentItem.heldRotationOffset += verticalInput * singleAxisSensitivity;
+                currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
         }
 
         /// <summary>
         /// Rotates a big item freely relative to the camera. Vertical movement pitches around
-        /// the camera's right axis; horizontal movement rolls around its forward axis, or yaws
+        /// the camera's right axis; horizontal movement rolls around its forward axis, or turns
         /// around its up axis when Alternative Rotation Axis is on. Holding the axis swap key
         /// flips that choice.
         /// </summary>
-        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float verticalInput, float sensitivity)
+        /// <param name="horizontalInput">Raw horizontal input; inverted here per the chosen axis's setting.</param>
+        /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
+        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity)
         {
             bool useAlternativeAxis = ModConfig.UseAlternativeRotationAxis.Value ^ ModInput.IsAxisSwapKeyHeld();
             Vector3 horizontalAxis = useAlternativeAxis ? mainCamera.transform.up : mainCamera.transform.forward;
-            float horizontalAngle = useAlternativeAxis ? horizontalInput * sensitivity : -horizontalInput * sensitivity;
+            ConfigEntry<bool> invertHorizontal = useAlternativeAxis ? ModConfig.InvertTurn : ModConfig.InvertRoll;
 
-            item.transform.Rotate(horizontalAxis, horizontalAngle, Space.World);
-            item.transform.Rotate(mainCamera.transform.right, verticalInput * sensitivity, Space.World);
+            item.transform.Rotate(horizontalAxis, -ApplyInversion(horizontalInput, invertHorizontal) * sensitivity, Space.World);
+            item.transform.Rotate(mainCamera.transform.right, tiltInput * sensitivity, Space.World);
             StoreBigItemRotation(item);
+        }
+
+        private static float ApplyInversion(float input, ConfigEntry<bool> invert)
+        {
+            return invert.Value ? -input : input;
         }
 
         /// <summary>

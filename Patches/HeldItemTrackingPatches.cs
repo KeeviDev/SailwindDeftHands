@@ -4,26 +4,34 @@ using HarmonyLib;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Keeps <see cref="RotationHandler"/> and <see cref="PushPullHandler"/>'s held item in sync
-    /// with GoPointer's own pickup/drop lifecycle.
+    /// Keeps <see cref="RotationHandler"/>, <see cref="PushPullHandler"/> and
+    /// <see cref="WallAttachmentRoll"/>'s held item in sync with GoPointer's own pickup/drop lifecycle.
     /// </summary>
     internal static class HeldItemTracker
     {
         /// <param name="item">The item now held, or null if nothing is held.</param>
-        public static void SetCurrentItem(PickupableItem item)
+        /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
+        public static void SetCurrentItem(PickupableItem item, bool wasAttached)
         {
             RotationHandler.GetInstance().SetCurrentItem(item);
             PushPullHandler.GetInstance().SetCurrentItem(item);
+            WallAttachmentRoll.SetCurrentItem(item, wasAttached);
         }
     }
 
     [HarmonyPatch(typeof(GoPointer), "PickUpItem")]
     public static class PickUpItemPatch
     {
-        public static void Postfix(PickupableItem item)
+        /// <summary>Records whether the item is attached to a surface before pickup detaches it.</summary>
+        public static void Prefix(PickupableItem item, out bool __state)
+        {
+            __state = item is ShipItem shipItem && shipItem.GetItemRigidbody() != null && shipItem.GetItemRigidbody().attached;
+        }
+
+        public static void Postfix(PickupableItem item, bool __state)
         {
             if (item != null)
-                HeldItemTracker.SetCurrentItem(item);
+                HeldItemTracker.SetCurrentItem(item, __state);
         }
     }
 
@@ -32,7 +40,7 @@ namespace DeftHands.Patches
     {
         public static void Prefix()
         {
-            HeldItemTracker.SetCurrentItem(null);
+            HeldItemTracker.SetCurrentItem(null, false);
         }
     }
 }

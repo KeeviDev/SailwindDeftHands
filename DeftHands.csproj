@@ -105,11 +105,14 @@
     <Compile Include="Configuration\RotationWeightPreset.cs" />
     <Compile Include="Runtime\RotationHandler.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
+    <Compile Include="Runtime\WallAttachmentRoll.cs" />
+    <Compile Include="Runtime\AttachmentSpace.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />
     <Compile Include="Patches\LegacyRotationBlockPatch.cs" />
     <Compile Include="Patches\MouseLookPatches.cs" />
+    <Compile Include="Patches\WallAttachmentPatches.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />

@@ -19,6 +19,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
+        public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
@@ -83,6 +84,14 @@ namespace DeftHands.Configuration
                     "While held together with the Rotation Activation Key, temporarily swaps which axis " +
                     "left/right mouse movement rotates big items around, overriding Alternative Rotation " +
                     "Axis for as long as it's held."));
+
+            WallAttachmentRotationEnabled = config.Bind(
+                HeldItemControlSection,
+                "Wall attachment rotation",
+                true,
+                new ConfigDescription(
+                    "Lets you control the angle items are hung on walls, ceilings and floors: " +
+                    "roll a wall-attachable item with the mouse and it attaches at that angle."));
 
             InvertVertical = config.Bind(
                 AxisInversionSection,

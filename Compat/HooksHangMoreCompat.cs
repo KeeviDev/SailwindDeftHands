@@ -6,36 +6,43 @@ using UnityEngine;
 namespace DeftHands.Compat
 {
     /// <summary>
-    /// Optional integration with HooksHangMore: lets mouse rotation drive its hook-swing axis
-    /// (PickupableItemAddOns.heldRotationYOffset). Works purely via reflection, so it does
-    /// nothing when HooksHangMore isn't installed.
+    /// Optional integration with HooksHangMore: reads and writes the hook-swing angle
+    /// (PickupableItemAddOns.heldRotationYOffset) of items it manages, so mouse rotation can drive
+    /// it within HooksHangMore's own range. Works purely via reflection, so it reports no managed
+    /// items when HooksHangMore isn't installed.
     /// </summary>
     internal static class HooksHangMoreCompat
     {
+        /// <summary>HooksHangMore's own limit on the swing angle, in degrees either way.</summary>
+        public const float MaxSwing = 90f;
+
         private const string AddOnsTypeName = "HooksHangMore.PickupableItemAddOns";
-        private const float MinOffset = -90f;
-        private const float MaxOffset = 90f;
 
         private static bool initialized;
         private static Type addOnsType;
-        private static FieldInfo offsetField;
+        private static FieldInfo swingField;
 
         /// <summary>
-        /// Adds <paramref name="delta"/> to the item's hook-swing offset, if it has one.
+        /// Returns the component HooksHangMore keeps the item's swing angle on, or null if
+        /// HooksHangMore doesn't manage the item or isn't installed.
         /// </summary>
-        /// <param name="delta">Offset change in degrees; the result is clamped to ±90.</param>
-        public static void AddHookSwing(PickupableItem item, float delta)
+        public static Component GetSwingOwner(PickupableItem item)
         {
             EnsureInitialized();
-            if (offsetField == null)
-                return;
+            return swingField != null ? item.GetComponent(addOnsType) : null;
+        }
 
-            Component addOns = item.GetComponent(addOnsType);
-            if (addOns == null)
-                return;
+        /// <param name="owner">A component returned by <see cref="GetSwingOwner"/>.</param>
+        public static float GetSwing(Component owner)
+        {
+            return (float)swingField.GetValue(owner);
+        }
 
-            float current = (float)offsetField.GetValue(addOns);
-            offsetField.SetValue(addOns, Mathf.Clamp(current + delta, MinOffset, MaxOffset));
+        /// <param name="owner">A component returned by <see cref="GetSwingOwner"/>.</param>
+        /// <param name="swing">Swing angle in degrees; clamped to ±<see cref="MaxSwing"/>.</param>
+        public static void SetSwing(Component owner, float swing)
+        {
+            swingField.SetValue(owner, Mathf.Clamp(swing, -MaxSwing, MaxSwing));
         }
 
         /// <summary>
@@ -52,7 +59,7 @@ namespace DeftHands.Compat
             if (addOnsType == null)
                 return;
 
-            offsetField = addOnsType.GetField(
+            swingField = addOnsType.GetField(
                 "heldRotationYOffset",
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         }

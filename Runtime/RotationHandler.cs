@@ -1,5 +1,4 @@
 using BepInEx.Configuration;
-using DeftHands.Compat;
 using DeftHands.Configuration;
 using DeftHands.Utils;
 using HarmonyLib;
@@ -33,8 +32,8 @@ namespace DeftHands.Runtime
         private const float LightSmoothTime = 0.1f;
 
         /// <summary>
-        /// Rotation speed of single-axis rotations (small items, quadrant, hook swing) relative
-        /// to big items.
+        /// Rotation speed of single-axis rotations (small items, quadrant, wall-attachment roll)
+        /// relative to big items.
         /// </summary>
         private const float SingleAxisSpeedMultiplier = 2f;
 
@@ -104,6 +103,7 @@ namespace DeftHands.Runtime
             if (!IsRotating)
             {
                 ResetWeightState();
+                WallAttachmentRoll.RecenterDeadzone();
                 return;
             }
 
@@ -162,7 +162,8 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Applies this frame's input to the held item's rotation. Leaves items with their own
+        /// Applies this frame's input to the held item's rotation. Horizontal movement on the roll
+        /// axis also rolls wall-attachable small items for attaching. Leaves items with their own
         /// OnScroll behaviour alone.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
@@ -177,12 +178,13 @@ namespace DeftHands.Runtime
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
             float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
-            float hookSwingInput = ApplyInversion(horizontalInput, ModConfig.InvertRoll);
+            bool useAlternativeAxis = IsAlternativeAxisActive();
 
-            HooksHangMoreCompat.AddHookSwing(currentItem, -hookSwingInput * singleAxisSensitivity);
+            if (WallAttachmentRoll.IsActive && !currentItem.big && !useAlternativeAxis)
+                WallAttachmentRoll.AddRollInput(-ApplyInversion(horizontalInput, ModConfig.InvertRoll) * singleAxisSensitivity);
 
             if (currentItem.big)
-                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity);
+                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, useAlternativeAxis);
             else if (currentItem is ShipItemQuadrant)
                 RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
@@ -190,22 +192,45 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Whether horizontal movement currently turns items around the camera's up axis instead
+        /// of rolling them: Alternative Rotation Axis, flipped while the axis swap key is held.
+        /// </summary>
+        private static bool IsAlternativeAxisActive()
+        {
+            return ModConfig.UseAlternativeRotationAxis.Value ^ ModInput.IsAxisSwapKeyHeld();
+        }
+
+        /// <summary>
         /// Rotates a big item freely relative to the camera. Vertical movement pitches around
         /// the camera's right axis; horizontal movement rolls around its forward axis, or turns
-        /// around its up axis when Alternative Rotation Axis is on. Holding the axis swap key
-        /// flips that choice.
+        /// around its up axis on the alternative axis. Wall-attachable items pause at upright
+        /// while rolling through it.
         /// </summary>
-        /// <param name="horizontalInput">Raw horizontal input; inverted here per the chosen axis's setting.</param>
+        /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
         /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
-        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity)
+        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity, bool useAlternativeAxis)
         {
-            bool useAlternativeAxis = ModConfig.UseAlternativeRotationAxis.Value ^ ModInput.IsAxisSwapKeyHeld();
-            Vector3 horizontalAxis = useAlternativeAxis ? mainCamera.transform.up : mainCamera.transform.forward;
-            ConfigEntry<bool> invertHorizontal = useAlternativeAxis ? ModConfig.InvertTurn : ModConfig.InvertRoll;
+            Transform camera = mainCamera.transform;
 
-            item.transform.Rotate(horizontalAxis, -ApplyInversion(horizontalInput, invertHorizontal) * sensitivity, Space.World);
-            item.transform.Rotate(mainCamera.transform.right, tiltInput * sensitivity, Space.World);
+            if (useAlternativeAxis)
+                item.transform.Rotate(camera.up, -ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
+            else
+                RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
+
+            item.transform.Rotate(camera.right, tiltInput * sensitivity, Space.World);
+
+            if (WallAttachmentRoll.IsActive)
+                WallAttachmentRoll.HoldBigItemUpright(item.transform);
+
             StoreBigItemRotation(item);
+        }
+
+        private static void RollBigItem(PickupableItem item, Vector3 axis, float degrees)
+        {
+            if (WallAttachmentRoll.IsActive)
+                WallAttachmentRoll.RollBigItem(item.transform, axis, degrees);
+            else
+                item.transform.Rotate(axis, degrees, Space.World);
         }
 
         private static float ApplyInversion(float input, ConfigEntry<bool> invert)

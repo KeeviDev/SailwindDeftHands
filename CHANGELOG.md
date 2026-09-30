@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] - 2026-09-30
+
+### Added
+
+- Wall attachment rotation: tilt hooks, maps, shelves and other wall-attachable items with the mouse to hang them at any angle on walls, ceilings and floors
+  - Can be turned off with the new "Wall attachment rotation" config option
+
+### Fixed
+
+- Items attached to ceilings and floors are no longer turned to a fixed or skewed direction; they now face the way they look in your hand (vanilla bug)
+
 ## [1.1.0] - 2026-09-26
 
 ### Added
@@ -22,5 +33,6 @@
 - Ability to disable legacy rotation control
 - Weight simulation with presets
 
+[1.2.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.2.0
 [1.1.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.1.0
 [1.0.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.0.0

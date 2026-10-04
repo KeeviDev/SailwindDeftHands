@@ -113,6 +113,7 @@
     <Compile Include="Patches\LegacyRotationBlockPatch.cs" />
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
+    <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />

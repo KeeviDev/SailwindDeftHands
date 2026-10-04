@@ -8,7 +8,9 @@ namespace DeftHands.Runtime
     /// Smooths Push/Pull On Scroll Wheel's distance changes so each scroll tick eases the held
     /// item to its new distance instead of snapping it there. Adds each frame's share of the
     /// movement to the affected fields' current values rather than writing a cached target,
-    /// since other code can modify them between frames.
+    /// since other code can modify them between frames. Pushing a big item hard against
+    /// something overpowers the game's push of it away from colliders (easy cargo placement)
+    /// until the push or pull ends.
     /// </summary>
     public class PushPullHandler : MonoBehaviour
     {
@@ -17,6 +19,29 @@ namespace DeftHands.Runtime
 
         /// <summary>Remaining distance below which the rest is applied at once and smoothing stops.</summary>
         private const float SettleThreshold = 0.0005f;
+
+        /// <summary>
+        /// Rate at which the game moves a held big item toward where its push away from colliders
+        /// points, per second.
+        /// </summary>
+        private const float GamePushOutRate = 3f;
+
+        /// <summary>Time over which the push-back against pushing or pulling is averaged, in seconds.</summary>
+        private const float PushBackAveragingTime = 0.2f;
+
+        /// <summary>
+        /// Push-back, in units per second taken off the push or pull, from which the game's push
+        /// away from colliders is overridden. Pushing fully against something is pushed back at
+        /// the push's own speed, and a single scroll tick peaks at about 0.38.
+        /// </summary>
+        private const float PushOutOverrideStartRate = 0.7f;
+
+        /// <summary>
+        /// Push-back below which the override stops, lower than
+        /// <see cref="PushOutOverrideStartRate"/> so the dips between ticks of steady scrolling
+        /// don't toggle it.
+        /// </summary>
+        private const float PushOutOverrideStopRate = 0.45f;
 
         private const float MinHoldDistance = 0.5f;
         private const float MaxHoldDistance = 2f;
@@ -39,6 +64,14 @@ namespace DeftHands.Runtime
         /// <summary>Mathf.SmoothDamp's own internal velocity state for appliedOffset.</summary>
         private float smoothVelocity;
 
+        /// <summary>
+        /// How much of the push or pull the game's push away from colliders tries to take back per
+        /// second, averaged over roughly <see cref="PushBackAveragingTime"/>.
+        /// </summary>
+        private float pushBackRate;
+
+        private bool overridesPushOut;
+
         public static PushPullHandler GetInstance()
         {
             if (instance == null)
@@ -48,6 +81,39 @@ namespace DeftHands.Runtime
                 DontDestroyOnLoad(obj);
             }
             return instance;
+        }
+
+        /// <summary>
+        /// Takes this frame's push of the held item away from colliders into account and returns
+        /// whether to cancel it: true while a push or pull is in progress and the game has been
+        /// pushing back against it hard enough.
+        /// </summary>
+        /// <param name="collisionChecker">The collision checker the push comes from.</param>
+        /// <param name="pushOut">The push as the game computed it, in the checker's local space.</param>
+        public bool UpdatePushOutOverride(PickupableItemCollisionChecker collisionChecker, Vector3 pushOut)
+        {
+            if (currentItem == null || currentItem.colChecker != collisionChecker || currentItem.held == null)
+                return false;
+
+            if (requestedOffset == appliedOffset)
+            {
+                pushBackRate = 0f;
+                overridesPushOut = false;
+                return false;
+            }
+
+            float pushDirection = Mathf.Sign(requestedOffset - appliedOffset);
+            Vector3 pushOutInWorld = currentItem.transform.TransformVector(pushOut);
+            float alongPush = Vector3.Dot(pushOutInWorld, currentItem.held.transform.forward) * pushDirection;
+            float pushBack = Mathf.Max(0f, -alongPush) * GamePushOutRate;
+            pushBackRate = Mathf.Lerp(pushBackRate, pushBack, 1f - Mathf.Exp(-Time.deltaTime / PushBackAveragingTime));
+
+            if (pushBackRate >= PushOutOverrideStartRate)
+                overridesPushOut = true;
+            else if (pushBackRate < PushOutOverrideStopRate)
+                overridesPushOut = false;
+
+            return overridesPushOut;
         }
 
         /// <summary>
@@ -81,7 +147,7 @@ namespace DeftHands.Runtime
         {
             if (currentItem == null || currentItem.held == null)
             {
-                ResetSmoothing();
+                SetCurrentItem(null);
                 return;
             }
 
@@ -104,6 +170,8 @@ namespace DeftHands.Runtime
             requestedOffset = 0f;
             appliedOffset = 0f;
             smoothVelocity = 0f;
+            pushBackRate = 0f;
+            overridesPushOut = false;
         }
 
         /// <summary>
@@ -118,35 +186,32 @@ namespace DeftHands.Runtime
             bool isWithinLimits = currentItem.holdDistance == requestedHoldDistance;
 
             if (currentItem.big && BigItemLocalPosField != null && DecolLocalPosField != null)
-                isWithinLimits = MoveBigItemFields(step);
+                isWithinLimits = MoveBigItem(step);
 
             return isWithinLimits;
         }
 
         /// <summary>
-        /// Moves bigItemLocalPos and decolLocalPos independently, each from its own current
-        /// value, so the offset between them is preserved.
+        /// Moves a big item's actual position (the holding GoPointer's decolLocalPos) and brings its
+        /// intended position (bigItemLocalPos) to the same depth. Without that, the game pushing
+        /// the item back from a collider would leave the intended position beyond the obstacle,
+        /// using up the distance limit and making the item jump through the obstacle when the
+        /// player looks around.
         /// </summary>
-        /// <param name="step">Distance to add to each field's Z component.</param>
-        /// <returns>False if bigItemLocalPos hit a distance limit.</returns>
-        private bool MoveBigItemFields(float step)
-        {
-            bool isWithinLimits = AddToLocalZ(BigItemLocalPosField, step);
-            AddToLocalZ(DecolLocalPosField, step);
-            return isWithinLimits;
-        }
-
-        /// <summary>
-        /// Adds <paramref name="step"/> to the Z component of a Vector3 field on the holding GoPointer.
-        /// </summary>
+        /// <param name="step">Distance to add to the depth.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
-        private bool AddToLocalZ(FieldInfo localPosField, float step)
+        private bool MoveBigItem(float step)
         {
-            Vector3 localPos = (Vector3)localPosField.GetValue(currentItem.held);
-            float requestedZ = localPos.z + step;
-            localPos.z = ClampTowardRange(localPos.z, requestedZ, MinBigItemDistance, MaxBigItemDistance);
-            localPosField.SetValue(currentItem.held, localPos);
-            return localPos.z == requestedZ;
+            Vector3 actual = (Vector3)DecolLocalPosField.GetValue(currentItem.held);
+            float requestedDepth = actual.z + step;
+            actual.z = ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance);
+            DecolLocalPosField.SetValue(currentItem.held, actual);
+
+            Vector3 intended = (Vector3)BigItemLocalPosField.GetValue(currentItem.held);
+            intended.z = actual.z;
+            BigItemLocalPosField.SetValue(currentItem.held, intended);
+
+            return actual.z == requestedDepth;
         }
 
         /// <summary>

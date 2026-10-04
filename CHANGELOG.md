@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1] - 2026-10-04
+
+### Fixed
+
+- Big items pushed with the scroll wheel are no longer held back by the game's easy cargo placement in tight spots; scrolling hard now overpowers it, while gentle scrolling still lets it push the item away
+- Big items pushed against a wall no longer get dragged into or through it when you look around
+
 ## [1.2.0] - 2026-09-30
 
 ### Added
@@ -33,6 +40,7 @@
 - Ability to disable legacy rotation control
 - Weight simulation with presets
 
+[1.2.1]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.2.1
 [1.2.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.2.0
 [1.1.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.1.0
 [1.0.0]: https://github.com/KeeviDev/SailwindDeftHands/releases/tag/v1.0.0

@@ -62,8 +62,10 @@ $VersionPatterns = [ordered]@{
 <#
 .SYNOPSIS
 Runs an external program attached directly to the console, so programs that redraw progress
-in place keep working. Throws if it exits with a non-zero code; the error names only the
-program and its subcommand, never the remaining arguments.
+in place keep working. Waits only for the program itself, not for background processes it
+leaves running, such as the compiler server MSBuild starts and keeps alive for ten minutes.
+Throws if it exits with a non-zero code; the error names only the program and its subcommand,
+never the remaining arguments.
 #>
 function Invoke-Checked {
     param([string]$FilePath, [string[]]$Arguments)
@@ -71,7 +73,10 @@ function Invoke-Checked {
     $quotedArguments = $Arguments | ForEach-Object {
         if ($_ -eq '' -or $_ -match '[\s"]') { '"' + $_.Replace('"', '\"') + '"' } else { $_ }
     }
-    $process = Start-Process -FilePath (Get-Command $FilePath).Source -ArgumentList $quotedArguments -NoNewWindow -Wait -PassThru
+    $process = Start-Process -FilePath (Get-Command $FilePath).Source -ArgumentList $quotedArguments -NoNewWindow -PassThru
+    # Opening the handle now keeps the exit code readable once the process has exited.
+    $null = $process.Handle
+    $process.WaitForExit()
 
     if ($process.ExitCode -ne 0) {
         throw "'$(Split-Path -Leaf $FilePath) $($Arguments[0])' failed with exit code $($process.ExitCode)."

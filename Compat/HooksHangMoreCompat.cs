@@ -6,9 +6,7 @@ using UnityEngine;
 namespace DeftHands.Compat
 {
     /// <summary>
-    /// Optional integration with HooksHangMore: reads and writes the hook-swing angle
-    /// (PickupableItemAddOns.heldRotationYOffset) of items it manages, so mouse rotation can drive
-    /// it within HooksHangMore's own range. Works purely via reflection, so it reports no managed
+    /// Reads and writes the hook-swing angle of items HooksHangMore manages. Reports no managed
     /// items when HooksHangMore isn't installed.
     /// </summary>
     internal static class HooksHangMoreCompat
@@ -46,8 +44,8 @@ namespace DeftHands.Compat
         }
 
         /// <summary>
-        /// Looks HooksHangMore up once. Must only be called after every plugin has loaded, since
-        /// a missing mod is never looked up again.
+        /// Looks HooksHangMore up on the first call only, keeping the result whether it was found
+        /// or not. Must only be called after every plugin has loaded.
         /// </summary>
         private static void EnsureInitialized()
         {

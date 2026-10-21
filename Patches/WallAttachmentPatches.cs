@@ -8,8 +8,7 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Applies <see cref="WallAttachmentRoll"/> to the attachment rotation ShipItem.Update computes
-    /// for the held item each frame, and refreshes the placement preview to match. Runs as a
-    /// postfix so it still applies when another mod's prefix replaces ShipItem.Update.
+    /// for the held item each frame, and refreshes the placement preview to match.
     /// </summary>
     [HarmonyPatch(typeof(ShipItem), "Update")]
     public static class WallAttachmentRollPatch

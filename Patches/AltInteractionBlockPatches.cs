@@ -12,7 +12,11 @@ namespace DeftHands.Patches
     {
         private static bool isPressSuppressed;
 
-        /// <summary>Filters GoPointer's "alt button pressed this frame" result.</summary>
+        /// <summary>
+        /// Returns <paramref name="isDown"/>, or false for a press that starts while the held item
+        /// is being mouse-rotated; such a press stays suppressed until it's released.
+        /// </summary>
+        /// <param name="isDown">GoPointer's "alt button pressed this frame" result.</param>
         public static bool FilterDown(bool isDown)
         {
             if (isDown)
@@ -21,7 +25,11 @@ namespace DeftHands.Patches
             return isDown && !isPressSuppressed;
         }
 
-        /// <summary>Filters GoPointer's "alt button held" result.</summary>
+        /// <summary>
+        /// Returns <paramref name="isHeld"/>, or false while the held item is being mouse-rotated
+        /// or a suppressed press is still held.
+        /// </summary>
+        /// <param name="isHeld">GoPointer's "alt button held" result.</param>
         public static bool FilterHeld(bool isHeld)
         {
             if (!isHeld)

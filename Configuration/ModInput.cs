@@ -4,8 +4,8 @@ using UnityEngine;
 namespace DeftHands.Configuration
 {
     /// <summary>
-    /// Reads the state of the mod's configurable keys. Unlike KeyboardShortcut.IsPressed, a key
-    /// counts as held even while other keys are held too.
+    /// Reads whether the mod's configurable keys are held. Only each shortcut's main key counts,
+    /// whatever other keys are held with it.
     /// </summary>
     internal static class ModInput
     {

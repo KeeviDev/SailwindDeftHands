@@ -10,13 +10,9 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Blocks GoPointer's built-in scroll-wheel rotation (both axes) when Legacy Rotation
-    /// Control is off. Items with their own OnScroll behaviour, NANDTweaks' push/pull and
-    /// Push/Pull on Scroll Wheel keep receiving scroll input.
+    /// Control is off, except on items with their own OnScroll behaviour and while the scroll
+    /// drives NANDTweaks' push/pull or Push/Pull on Scroll Wheel.
     /// </summary>
-    /// <remarks>
-    /// Forces the scroll delta GoPointer.LateUpdate checks before its rotation branch to 0,
-    /// which skips that branch entirely.
-    /// </remarks>
     [HarmonyPatch(typeof(GoPointer), "LateUpdate")]
     public static class LegacyRotationBlockPatch
     {

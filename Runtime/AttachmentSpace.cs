@@ -5,10 +5,9 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Converts between the visible world and the space the game computes surface attachment in.
-    /// On a boat, an item's physics body lives on a static copy of the boat (its walk collider),
-    /// so attachment rays, positions and rotations are in that copy's space rather than the
-    /// visible boat's.
+    /// Converts between the visible world and attachment space, the space the game computes
+    /// surface attachment in: that of the static boat copy (walk collider) an item's physics body
+    /// sits on while on a boat, and the world otherwise.
     /// </summary>
     internal static class AttachmentSpace
     {

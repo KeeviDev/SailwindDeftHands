@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DeftHands.Configuration
 {
     /// <summary>
-    /// Deft Hands' user-facing settings. <see cref="Bind"/> must run before any setting is read.
+    /// Holds Deft Hands' user-facing settings. <see cref="Bind"/> must run before any setting is read.
     /// </summary>
     internal static class ModConfig
     {

@@ -14,8 +14,7 @@ namespace DeftHands.Runtime
     public class RotationHandler : MonoBehaviour
     {
         /// <summary>
-        /// Quadrant offsets within this many degrees of zero, its star-sighting calibration
-        /// point, snap to exactly zero.
+        /// Quadrant offsets within this many degrees of zero snap to exactly zero.
         /// </summary>
         private const float QuadrantZeroDeadzoneDegrees = 2f;
 
@@ -55,8 +54,7 @@ namespace DeftHands.Runtime
         private float dampVelocityY;
 
         /// <summary>
-        /// The quadrant's accumulated rotation before the zero-position deadzone is applied, so
-        /// the deadzone doesn't lose how far into it the cursor actually is.
+        /// The quadrant's accumulated rotation before the zero-position deadzone is applied.
         /// </summary>
         private float quadrantRawOffset;
 
@@ -66,7 +64,7 @@ namespace DeftHands.Runtime
         /// </summary>
         private float lastAppliedQuadrantOffset;
 
-        /// <summary>Whether the player is currently mouse-rotating a held item.</summary>
+        /// <summary>Gets whether the player is currently mouse-rotating a held item.</summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
             && ModInput.IsRotationActivationKeyHeld()
@@ -163,8 +161,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Applies this frame's input to the held item's rotation. Horizontal movement on the roll
-        /// axis also rolls wall-attachable small items for attaching. Leaves items with their own
-        /// OnScroll behaviour alone.
+        /// axis also rolls wall-attachable small items for attaching.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
@@ -192,8 +189,9 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Whether horizontal movement currently turns items around the camera's up axis instead
-        /// of rolling them: Alternative Rotation Axis, flipped while the axis swap key is held.
+        /// Returns whether horizontal movement currently turns items around the camera's up axis
+        /// instead of rolling them: Alternative Rotation Axis, flipped while the axis swap key is
+        /// held.
         /// </summary>
         private static bool IsAlternativeAxisActive()
         {
@@ -239,8 +237,8 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, the
-        /// same way the game's own Q-axis rotation does, so it persists on following frames.
+        /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, so it
+        /// persists on following frames, and resets the item's heldRotationOffset.
         /// </summary>
         private static void StoreBigItemRotation(PickupableItem item)
         {
@@ -253,8 +251,9 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Rotates the quadrant around its single axis, snapping to zero near its calibration
-        /// point (see <see cref="QuadrantZeroDeadzoneDegrees"/>).
+        /// Rotates the quadrant around its single axis, snapping to zero within
+        /// <see cref="QuadrantZeroDeadzoneDegrees"/> of it, and picks up changes other code made to
+        /// its offset in the meantime.
         /// </summary>
         /// <param name="angle">Rotation to add, in degrees.</param>
         private void RotateQuadrant(float angle)

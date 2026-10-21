@@ -5,16 +5,13 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Smooths Push/Pull On Scroll Wheel's distance changes so each scroll tick eases the held
-    /// item to its new distance instead of snapping it there. Adds each frame's share of the
-    /// movement to the affected fields' current values rather than writing a cached target,
-    /// since other code can modify them between frames. Pushing a big item hard against
-    /// something overpowers the game's push of it away from colliders (easy cargo placement)
-    /// until the push or pull ends.
+    /// Eases the held item to each distance Push/Pull on Scroll Wheel requests over the following
+    /// frames. Adds each frame's share of the movement to the item's current distance rather than
+    /// writing a cached target, since other code can change it between frames.
     /// </summary>
     public class PushPullHandler : MonoBehaviour
     {
-        /// <summary>Approximate time the held item takes to ease to the distance requested by scrolling.</summary>
+        /// <summary>Approximate time the held item takes to ease to the distance requested by scrolling, in seconds.</summary>
         private const float SmoothTime = 0.12f;
 
         /// <summary>Remaining distance below which the rest is applied at once and smoothing stops.</summary>
@@ -31,15 +28,12 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Push-back, in units per second taken off the push or pull, from which the game's push
-        /// away from colliders is overridden. Pushing fully against something is pushed back at
-        /// the push's own speed, and a single scroll tick peaks at about 0.38.
+        /// away from colliders is overridden.
         /// </summary>
         private const float PushOutOverrideStartRate = 0.7f;
 
         /// <summary>
-        /// Push-back below which the override stops, lower than
-        /// <see cref="PushOutOverrideStartRate"/> so the dips between ticks of steady scrolling
-        /// don't toggle it.
+        /// Push-back, in units per second, below which the override stops.
         /// </summary>
         private const float PushOutOverrideStopRate = 0.45f;
 
@@ -117,8 +111,7 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Registers the currently held item and discards any movement still in progress, so a
-        /// freshly picked up item doesn't inherit motion left over from the previous one.
+        /// Registers the currently held item and discards any movement still in progress.
         /// </summary>
         public void SetCurrentItem(PickupableItem item)
         {
@@ -141,7 +134,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Applies this frame's share of the queued movement. Discards whatever remains once a
-        /// distance limit is reached, so scrolling back responds immediately.
+        /// distance limit is reached.
         /// </summary>
         private void Update()
         {
@@ -193,10 +186,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Moves a big item's actual position (the holding GoPointer's decolLocalPos) and brings its
-        /// intended position (bigItemLocalPos) to the same depth. Without that, the game pushing
-        /// the item back from a collider would leave the intended position beyond the obstacle,
-        /// using up the distance limit and making the item jump through the obstacle when the
-        /// player looks around.
+        /// intended position (bigItemLocalPos) to the same depth.
         /// </summary>
         /// <param name="step">Distance to add to the depth.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
@@ -215,9 +205,8 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Clamps <paramref name="requested"/> to [<paramref name="min"/>, <paramref name="max"/>],
-        /// widened to include <paramref name="current"/>, so a value already outside the range can
-        /// move back toward it without jumping to the nearest limit.
+        /// Clamps <paramref name="requested"/> to [<paramref name="min"/>, <paramref name="max"/>]
+        /// widened to include <paramref name="current"/>.
         /// </summary>
         private static float ClampTowardRange(float current, float requested, float min, float max)
         {

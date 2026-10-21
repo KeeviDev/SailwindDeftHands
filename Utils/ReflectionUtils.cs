@@ -7,7 +7,6 @@ namespace DeftHands.Utils
     {
         /// <summary>
         /// Finds a type by its full name across every assembly loaded in the app domain.
-        /// Assemblies that can't be inspected are skipped.
         /// </summary>
         /// <returns>The type, or null if no loaded assembly defines it.</returns>
         public static Type FindType(string fullName)

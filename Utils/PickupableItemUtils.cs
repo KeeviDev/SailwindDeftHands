@@ -6,9 +6,7 @@ namespace DeftHands.Utils
     internal static class PickupableItemUtils
     {
         /// <summary>
-        /// Returns true if the item's class overrides OnScroll, meaning scroll input drives
-        /// item-specific behaviour (compass needle, spyglass zoom, fishing line) rather than
-        /// rotation.
+        /// Returns whether the item's class overrides PickupableItem.OnScroll.
         /// </summary>
         public static bool HasCustomOnScroll(PickupableItem item)
         {

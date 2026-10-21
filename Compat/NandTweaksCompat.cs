@@ -6,9 +6,9 @@ using System.Reflection;
 namespace DeftHands.Compat
 {
     /// <summary>
-    /// Optional integration with NANDTweaks: reads its "rotate held item" and "push/pull held
-    /// item" keybinds, following the user's rebinds. Works purely via reflection, so every key
-    /// reads as not pressed when NANDTweaks isn't installed.
+    /// Reads whether NANDTweaks' "rotate held item" and "push/pull held item" keybinds are
+    /// pressed, as the player has bound them. Every key reads as not pressed when NANDTweaks
+    /// isn't installed.
     /// </summary>
     internal static class NandTweaksCompat
     {
@@ -37,8 +37,8 @@ namespace DeftHands.Compat
         }
 
         /// <summary>
-        /// Looks NANDTweaks up once. Must only be called after every plugin has loaded, since a
-        /// missing mod is never looked up again.
+        /// Looks NANDTweaks up on the first call only, keeping the result whether it was found or
+        /// not. Must only be called after every plugin has loaded.
         /// </summary>
         private static void EnsureInitialized()
         {

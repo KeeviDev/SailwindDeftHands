@@ -45,6 +45,8 @@ namespace DeftHands.Runtime
 
         private PickupableItem currentItem;
 
+        private bool isCurrentItemRotatable;
+
         /// <summary>Weight-smoothed replacement for this frame's raw mouse delta.</summary>
         private float smoothedX;
         private float smoothedY;
@@ -64,9 +66,13 @@ namespace DeftHands.Runtime
         /// </summary>
         private float lastAppliedQuadrantOffset;
 
-        /// <summary>Gets whether the player is currently mouse-rotating a held item.</summary>
+        /// <summary>
+        /// Gets whether the player is currently mouse-rotating the held item; never true for items
+        /// with their own OnScroll behaviour.
+        /// </summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
+            && isCurrentItemRotatable
             && ModInput.IsRotationModifierKeyHeld()
             && currentItem != null
             && currentItem.held != null;
@@ -89,6 +95,7 @@ namespace DeftHands.Runtime
         public void SetCurrentItem(PickupableItem item)
         {
             currentItem = item;
+            isCurrentItemRotatable = item != null && !PickupableItemUtils.HasCustomOnScroll(item);
             ResetWeightState();
 
             float offset = item != null ? item.heldRotationOffset : 0f;
@@ -165,9 +172,6 @@ namespace DeftHands.Runtime
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
-            if (PickupableItemUtils.HasCustomOnScroll(currentItem))
-                return;
-
             Camera mainCamera = Camera.main;
             if (mainCamera == null)
                 return;

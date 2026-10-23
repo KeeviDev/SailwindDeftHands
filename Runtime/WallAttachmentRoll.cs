@@ -55,17 +55,19 @@ namespace DeftHands.Runtime
         private static float lastWrittenSwing;
 
         /// <summary>
-        /// Gets whether the held item takes roll input: it's wall-attachable and Wall Attachment
-        /// Rotation is on, or HooksHangMore manages its roll.
+        /// Gets whether the held item currently takes roll input: it's wall-attachable, and Wall
+        /// Attachment Rotation is on or HooksHangMore manages its roll.
         /// </summary>
         public static bool IsActive =>
-            currentItem != null && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
+            currentItem != null
+            && currentItem.wallAttachment
+            && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
 
         /// <summary>
-        /// Starts tracking the held item if it's wall-attachable. A small item starts at the roll
-        /// HooksHangMore holds it at if HooksHangMore manages it, at the roll that would attach it
-        /// back the same way if it was taken off a surface, and upright otherwise. The previously
-        /// tracked item gets back any roll taken off it earlier in the frame.
+        /// Starts tracking the held item. A small item that's wall-attachable when picked up starts
+        /// at the roll HooksHangMore holds it at if HooksHangMore manages it, at the roll that would
+        /// attach it back the same way if it was taken off a surface, and upright otherwise. The
+        /// previously tracked item gets back any roll taken off it earlier in the frame.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
         /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
@@ -74,14 +76,14 @@ namespace DeftHands.Runtime
             if (currentItem != null)
                 RollHeldItem(currentItem);
 
-            currentItem = item is ShipItem shipItem && shipItem.wallAttachment ? shipItem : null;
+            currentItem = item as ShipItem;
             rollInput = 0f;
             uprightInput = 0f;
             isBigItemUpright = false;
             hookSwingOwner = null;
             heldItemRoll = 0f;
 
-            if (currentItem == null)
+            if (currentItem == null || !currentItem.wallAttachment)
                 return;
 
             if (currentItem.big)

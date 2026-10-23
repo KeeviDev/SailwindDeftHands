@@ -28,9 +28,10 @@ namespace DeftHands.Patches
             __state = item is ShipItem shipItem && shipItem.GetItemRigidbody() != null && shipItem.GetItemRigidbody().attached;
         }
 
-        public static void Postfix(PickupableItem item, bool __state)
+        /// <summary>Starts tracking the item if the pointer now holds it.</summary>
+        public static void Postfix(GoPointer __instance, PickupableItem item, bool __state)
         {
-            if (item != null)
+            if (item != null && __instance.GetHeldItem() == item)
                 HeldItemTracker.SetCurrentItem(item, __state);
         }
     }
@@ -38,9 +39,11 @@ namespace DeftHands.Patches
     [HarmonyPatch(typeof(GoPointer), "DropItem")]
     public static class DropItemPatch
     {
-        public static void Prefix()
+        /// <summary>Stops tracking the held item if the pointer no longer holds anything.</summary>
+        public static void Postfix(GoPointer __instance)
         {
-            HeldItemTracker.SetCurrentItem(null, false);
+            if (__instance.GetHeldItem() == null)
+                HeldItemTracker.SetCurrentItem(null, false);
         }
     }
 }

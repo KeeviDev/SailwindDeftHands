@@ -6,6 +6,7 @@
 
 ### Fixed
 
+- Holding the modifier key with a compass, spyglass, fishing rod or another item that uses the scroll wheel no longer freezes the camera
 - Mouse rotation and push/pull no longer stop working on an item that another mod keeps in your hand when you try to drop it, such as a braced Tent and Plank pole
 
 ## [1.2.1] - 2026-10-04

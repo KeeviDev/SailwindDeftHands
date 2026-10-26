@@ -72,9 +72,9 @@ namespace DeftHands.Configuration
                 "Alternative rotation axis",
                 false,
                 new ConfigDescription(
-                    "Changes which axis left/right mouse movement rotates the item around. By default, it " +
-                    "rolls the item around the direction you're looking. Turn this on to instead yaw it " +
-                    "around the vertical axis."));
+                    "Changes which axis left/right mouse movement rotates crates, barrels and other big items " +
+                    "around. By default, it rolls them around the direction you're looking. Turn this on to " +
+                    "instead yaw them around the vertical axis."));
 
             AxisSwapKey = config.Bind(
                 HeldItemControlSection,

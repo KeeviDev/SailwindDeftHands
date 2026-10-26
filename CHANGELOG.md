@@ -2,10 +2,19 @@
 
 ### Added
 
-- "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+- "Item Rotation" config section:
+  - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
+  - Keep rolling level — big items roll around a level axis, even when you look up or down
+  - Keep tilting level — on a boat, big items tilt around an axis level with the deck
+  - Lock tilt — up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+- "Item Carrying" config section:
+  - Horizontal stabilization — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
+  - Heading stabilization — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
 
 ### Changed
 
+- **Reworked item holding system:** by default only horizontal stabilization is on, which keeps the held item facing the same way when you look up or down, in the world or relative to the deck on a boat ("Horizontal stabilization"); keeping its facing when you turn around stays off by default ("Heading stabilization")
+- **New axis orientation for more predictable item rotation:** items now turn, roll and tilt around level axes, following the deck on a boat, instead of depending on your view; turn off the new "Keep turning level", "Keep rolling level" and "Keep tilting level" options for the old behaviour
 - Configuration file is reorganized: the main options now sit in the "General Features" and "Wall Attachment Features" sections; options that moved start from their defaults, so if you changed them, set them again
 - "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only big items, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
 - Turning big items on the alternative axis now goes the other way by default

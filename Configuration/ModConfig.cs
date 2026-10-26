@@ -10,6 +10,7 @@ namespace DeftHands.Configuration
     {
         private const string GeneralFeaturesSection = "General Features";
         private const string WallAttachmentFeaturesSection = "Wall Attachment Features";
+        private const string ItemCarryingSection = "Item Carrying";
         private const string ItemRotationSection = "Item Rotation";
         private const string KeysSection = "Keys";
         private const string AxisInversionSection = "Axis Inversion";
@@ -19,9 +20,14 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> PushPullScrollEnabled { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
+        public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
+        public static ConfigEntry<bool> HeadingStabilization { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> SwitchTurnRollAxes { get; private set; }
         public static ConfigEntry<TiltLock> LockTilt { get; private set; }
+        public static ConfigEntry<bool> KeepTurningLevel { get; private set; }
+        public static ConfigEntry<bool> KeepRollingLevel { get; private set; }
+        public static ConfigEntry<bool> KeepTiltingLevel { get; private set; }
         public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
@@ -38,6 +44,7 @@ namespace DeftHands.Configuration
         {
             BindGeneralFeatures(config);
             BindWallAttachmentFeatures(config);
+            BindItemCarrying(config);
             BindItemRotation(config);
             BindKeys(config);
             BindAxisInversion(config);
@@ -105,6 +112,25 @@ namespace DeftHands.Configuration
                     "the wall, ceiling or floor at that angle."));
         }
 
+        private static void BindItemCarrying(ConfigFile config)
+        {
+            HorizontalStabilization = config.Bind(
+                ItemCarryingSection,
+                "Horizontal stabilization",
+                true,
+                new ConfigDescription(
+                    "Items you carry keep facing the same way when you look up or down, in the world or on the deck " +
+                    "of your boat."));
+
+            HeadingStabilization = config.Bind(
+                ItemCarryingSection,
+                "Heading stabilization",
+                false,
+                new ConfigDescription(
+                    "Items you carry keep facing the same way when you turn around, in the world or on the deck of " +
+                    "your boat."));
+        }
+
         private static void BindItemRotation(ConfigFile config)
         {
             RotationSensitivity = config.Bind(
@@ -131,6 +157,29 @@ namespace DeftHands.Configuration
                     "Up/down mouse movement doesn't tilt items: with \"Without Axis Swap\" while you hold only the " +
                     "modifier key, with \"On Axis Swap\" while you also hold the axis swap key; with \"Off\", " +
                     "tilting works in both cases."));
+
+            KeepTurningLevel = config.Bind(
+                ItemRotationSection,
+                "Keep turning level",
+                true,
+                new ConfigDescription(
+                    "Items turn around the vertical, or the deck's vertical on a boat, so turning doesn't depend on " +
+                    "where you look."));
+
+            KeepRollingLevel = config.Bind(
+                ItemRotationSection,
+                "Keep rolling level",
+                true,
+                new ConfigDescription(
+                    "Items roll around a level axis, following the deck on a boat, so rolling doesn't depend on " +
+                    "where you look."));
+
+            KeepTiltingLevel = config.Bind(
+                ItemRotationSection,
+                "Keep tilting level",
+                true,
+                new ConfigDescription(
+                    "On a boat, items tilt around an axis level with the deck instead of with the horizon."));
         }
 
         private static void BindKeys(ConfigFile config)

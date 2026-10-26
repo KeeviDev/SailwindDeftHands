@@ -2,10 +2,18 @@
 
 ### Added
 
+- "Held Item Orientation" config section:
+  - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
+  - Keep rolling level — big items roll around a level axis, even when you look up or down
+  - Keep tilting level — on a boat, big items tilt around an axis level with the deck
+  - Keep facing when looking up and down — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
+  - Keep facing when turning around — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
 - "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
 
 ### Changed
 
+- Big items now turn, roll and tilt around level axes, following the deck on a boat, so they stay level when you look up or down; turn off the new "Keep turning level", "Keep rolling level" and "Keep tilting level" options for the old behaviour
+- Big items you carry now keep facing the same way when you look up or down; turn off the new "Keep facing when looking up and down" option for the old behaviour
 - The axis swap key and the "Alternative rotation axis" option now affect only big items; hooks, maps and other small wall-attachable items always roll with left/right mouse movement
 - Turning big items on the alternative axis now goes the other way by default
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again

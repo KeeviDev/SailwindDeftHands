@@ -108,6 +108,9 @@
     <Compile Include="Runtime\PushPullHandler.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
+    <Compile Include="Runtime\RotationFrame.cs" />
+    <Compile Include="Runtime\BigItemFacing.cs" />
+    <Compile Include="Patches\BigItemFacingPatch.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />

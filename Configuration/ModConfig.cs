@@ -9,6 +9,7 @@ namespace DeftHands.Configuration
     internal static class ModConfig
     {
         private const string HeldItemControlSection = "Held Item Control";
+        private const string HeldItemOrientationSection = "Held Item Orientation";
         private const string AxisInversionSection = "Axis Inversion";
         private const string WeightSimulationSection = "Weight Simulation";
 
@@ -20,6 +21,11 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<TiltLock> LockTilt { get; private set; }
+        public static ConfigEntry<bool> KeepTurningLevel { get; private set; }
+        public static ConfigEntry<bool> KeepRollingLevel { get; private set; }
+        public static ConfigEntry<bool> KeepTiltingLevel { get; private set; }
+        public static ConfigEntry<bool> KeepFacingWhenLookingUpAndDown { get; private set; }
+        public static ConfigEntry<bool> KeepFacingWhenTurningAround { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
@@ -93,6 +99,46 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Up/down mouse movement doesn't tilt big items. Without Axis Swap: while you hold only the " +
                     "modifier key. On Axis Swap: while you also hold the Axis Swap Key."));
+
+            KeepTurningLevel = config.Bind(
+                HeldItemOrientationSection,
+                "Keep turning level",
+                true,
+                new ConfigDescription(
+                    "Crates, barrels and other big items turn around the vertical, so they stay level when you " +
+                    "look up or down at them. On a boat they turn around the deck's vertical."));
+
+            KeepRollingLevel = config.Bind(
+                HeldItemOrientationSection,
+                "Keep rolling level",
+                true,
+                new ConfigDescription(
+                    "Crates, barrels and other big items roll around a level axis, even when you look up or down " +
+                    "at them. On a boat the axis follows the deck."));
+
+            KeepTiltingLevel = config.Bind(
+                HeldItemOrientationSection,
+                "Keep tilting level",
+                true,
+                new ConfigDescription(
+                    "On a boat, crates, barrels and other big items tilt around an axis level with the deck " +
+                    "instead of with the horizon."));
+
+            KeepFacingWhenLookingUpAndDown = config.Bind(
+                HeldItemOrientationSection,
+                "Keep facing when looking up and down",
+                true,
+                new ConfigDescription(
+                    "Crates, barrels and other big items you carry keep facing the same way when you look up " +
+                    "or down, instead of tilting with your view. On a boat they keep facing the same way on deck."));
+
+            KeepFacingWhenTurningAround = config.Bind(
+                HeldItemOrientationSection,
+                "Keep facing when turning around",
+                false,
+                new ConfigDescription(
+                    "Crates, barrels and other big items you carry keep facing the same way when you turn " +
+                    "around, instead of turning with you. On a boat they keep facing the same way on deck."));
 
             WallAttachmentRotationEnabled = config.Bind(
                 HeldItemControlSection,

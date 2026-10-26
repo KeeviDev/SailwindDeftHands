@@ -1,5 +1,3 @@
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -42,8 +40,6 @@ namespace DeftHands.Runtime
         private const float MinBigItemDistance = 1f;
         private const float MaxBigItemDistance = 3f;
 
-        private static readonly FieldInfo BigItemLocalPosField = AccessTools.Field(typeof(GoPointer), "bigItemLocalPos");
-        private static readonly FieldInfo DecolLocalPosField = AccessTools.Field(typeof(GoPointer), "decolLocalPos");
 
         private static PushPullHandler instance;
 
@@ -178,7 +174,7 @@ namespace DeftHands.Runtime
             currentItem.holdDistance = ClampTowardRange(currentItem.holdDistance, requestedHoldDistance, MinHoldDistance, MaxHoldDistance);
             bool isWithinLimits = currentItem.holdDistance == requestedHoldDistance;
 
-            if (currentItem.big && BigItemLocalPosField != null && DecolLocalPosField != null)
+            if (currentItem.big && GoPointerFields.BigItemLocalPos != null && GoPointerFields.DecolLocalPos != null)
                 isWithinLimits = MoveBigItem(step);
 
             return isWithinLimits;
@@ -192,14 +188,10 @@ namespace DeftHands.Runtime
         /// <returns>False if a distance limit cut the move short.</returns>
         private bool MoveBigItem(float step)
         {
-            Vector3 actual = (Vector3)DecolLocalPosField.GetValue(currentItem.held);
+            ref Vector3 actual = ref GoPointerFields.DecolLocalPos(currentItem.held);
             float requestedDepth = actual.z + step;
             actual.z = ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance);
-            DecolLocalPosField.SetValue(currentItem.held, actual);
-
-            Vector3 intended = (Vector3)BigItemLocalPosField.GetValue(currentItem.held);
-            intended.z = actual.z;
-            BigItemLocalPosField.SetValue(currentItem.held, intended);
+            GoPointerFields.BigItemLocalPos(currentItem.held).z = actual.z;
 
             return actual.z == requestedDepth;
         }

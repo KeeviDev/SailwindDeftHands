@@ -16,19 +16,19 @@ namespace DeftHands.Compat
         private const BindingFlags FieldFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
         private static bool initialized;
-        private static FieldInfo rotateKeyField;
-        private static FieldInfo pushKeyField;
+        private static ConfigEntry<KeyboardShortcut> rotateKey;
+        private static ConfigEntry<KeyboardShortcut> pushKey;
 
         public static bool IsRotateKeyPressed()
         {
             EnsureInitialized();
-            return IsShortcutPressed(rotateKeyField);
+            return IsShortcutPressed(rotateKey);
         }
 
         public static bool IsPushKeyPressed()
         {
             EnsureInitialized();
-            return IsShortcutPressed(pushKeyField);
+            return IsShortcutPressed(pushKey);
         }
 
         public static bool IsAnyKeyPressed()
@@ -50,19 +50,13 @@ namespace DeftHands.Compat
             if (pluginType == null)
                 return;
 
-            rotateKeyField = pluginType.GetField("rotateItemKey", FieldFlags);
-            pushKeyField = pluginType.GetField("pushItemKey", FieldFlags);
+            rotateKey = pluginType.GetField("rotateItemKey", FieldFlags)?.GetValue(null) as ConfigEntry<KeyboardShortcut>;
+            pushKey = pluginType.GetField("pushItemKey", FieldFlags)?.GetValue(null) as ConfigEntry<KeyboardShortcut>;
         }
 
-        private static bool IsShortcutPressed(FieldInfo configEntryField)
+        private static bool IsShortcutPressed(ConfigEntry<KeyboardShortcut> shortcut)
         {
-            if (configEntryField == null)
-                return false;
-
-            if (!(configEntryField.GetValue(null) is ConfigEntry<KeyboardShortcut> configEntry))
-                return false;
-
-            return configEntry.Value.IsPressed();
+            return shortcut != null && shortcut.Value.IsPressed();
         }
     }
 }

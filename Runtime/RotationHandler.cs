@@ -1,8 +1,6 @@
 using BepInEx.Configuration;
 using DeftHands.Configuration;
 using DeftHands.Utils;
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -38,8 +36,6 @@ namespace DeftHands.Runtime
 
         /// <summary>Mouse movement below this on both axes is ignored.</summary>
         private const float MinAppliedInput = 0.001f;
-
-        private static readonly FieldInfo BigItemLocalRotField = AccessTools.Field(typeof(GoPointer), "bigItemLocalRot");
 
         private static RotationHandler instance;
 
@@ -280,11 +276,11 @@ namespace DeftHands.Runtime
         /// </summary>
         private static void TurnToHolderPose(PickupableItem item)
         {
-            if (BigItemLocalRotField == null)
+            if (GoPointerFields.BigItemLocalRot == null)
                 return;
 
             BigItemFacing.KeepFacing(item.held);
-            Quaternion rotationInHand = (Quaternion)BigItemLocalRotField.GetValue(item.held);
+            Quaternion rotationInHand = GoPointerFields.BigItemLocalRot(item.held);
             Quaternion offset = Quaternion.AngleAxis(item.heldRotationOffset, Vector3.right);
             item.transform.rotation = item.held.transform.rotation * offset * rotationInHand;
         }
@@ -295,11 +291,11 @@ namespace DeftHands.Runtime
         /// </summary>
         private static void StoreBigItemRotation(PickupableItem item)
         {
-            if (BigItemLocalRotField == null)
+            if (GoPointerFields.BigItemLocalRot == null)
                 return;
 
             Quaternion holderRotation = item.held.transform.rotation;
-            BigItemLocalRotField.SetValue(item.held, Quaternion.Inverse(holderRotation) * item.transform.rotation);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holderRotation) * item.transform.rotation;
             item.heldRotationOffset = 0f;
         }
 

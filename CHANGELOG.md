@@ -2,6 +2,7 @@
 
 ### Changed
 
+- The "Alternative rotation axis" option now affects only big items, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
 - Turning big items on the alternative axis now goes the other way by default
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 

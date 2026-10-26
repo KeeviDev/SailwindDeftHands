@@ -181,7 +181,7 @@ namespace DeftHands.Runtime
             float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
             bool useAlternativeAxis = IsAlternativeAxisActive();
 
-            if (WallAttachmentRoll.IsActive && !currentItem.big && !useAlternativeAxis)
+            if (WallAttachmentRoll.IsActive && !currentItem.big)
                 WallAttachmentRoll.AddRollInput(-ApplyInversion(horizontalInput, ModConfig.InvertRoll) * singleAxisSensitivity);
 
             if (currentItem.big)
@@ -193,7 +193,7 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Returns whether horizontal movement currently turns items around the camera's up axis
+        /// Returns whether horizontal movement currently turns big items around the camera's up axis
         /// instead of rolling them: Alternative Rotation Axis, flipped while the axis swap key is
         /// held.
         /// </summary>

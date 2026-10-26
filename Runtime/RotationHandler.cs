@@ -215,7 +215,7 @@ namespace DeftHands.Runtime
             Transform camera = mainCamera.transform;
 
             if (useAlternativeAxis)
-                item.transform.Rotate(camera.up, -ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
+                item.transform.Rotate(camera.up, ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
             else
                 RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
 

@@ -2,6 +2,7 @@
 
 ### Changed
 
+- Turning big items on the alternative axis now goes the other way by default
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 
 ### Fixed

@@ -1,5 +1,9 @@
 # Changelog
 
+### Added
+
+- "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+
 ### Changed
 
 - The axis swap key and the "Alternative rotation axis" option now affect only big items; hooks, maps and other small wall-attachable items always roll with left/right mouse movement

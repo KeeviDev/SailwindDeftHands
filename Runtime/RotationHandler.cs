@@ -203,10 +203,25 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Returns whether vertical movement currently leaves big items at their tilt: Lock Tilt is
+        /// On Axis Swap and the axis swap key is held, or Without Axis Swap and it isn't.
+        /// </summary>
+        private static bool IsTiltLocked()
+        {
+            switch (ModConfig.LockTilt.Value)
+            {
+                case TiltLock.WithoutAxisSwap: return !ModInput.IsAxisSwapKeyHeld();
+                case TiltLock.OnAxisSwap: return ModInput.IsAxisSwapKeyHeld();
+                default: return false;
+            }
+        }
+
+        /// <summary>
         /// Rotates a big item freely relative to the camera. Vertical movement pitches around
         /// the camera's right axis; horizontal movement rolls around its forward axis, or turns
-        /// around its up axis on the alternative axis. Wall-attachable items pause at upright
-        /// while rolling through it.
+        /// around its up axis on the alternative axis. Vertical movement is ignored while
+        /// <see cref="IsTiltLocked"/>. Wall-attachable items pause at upright while rolling
+        /// through it.
         /// </summary>
         /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
         /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
@@ -219,7 +234,8 @@ namespace DeftHands.Runtime
             else
                 RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
 
-            item.transform.Rotate(camera.right, tiltInput * sensitivity, Space.World);
+            if (!IsTiltLocked())
+                item.transform.Rotate(camera.right, tiltInput * sensitivity, Space.World);
 
             if (WallAttachmentRoll.IsActive)
                 WallAttachmentRoll.HoldBigItemUpright(item.transform);

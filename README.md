@@ -46,6 +46,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Rotation sensitivity | 2 | How fast items turn (0.5–10). |
 | Alternative rotation axis | Off | Left/right turns big items around the vertical axis instead of rolling them. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the axis above. |
+| Lock tilt | On axis swap | Up/down movement doesn't tilt big items while you hold the modifier key alone (Without axis swap) or with the axis swap key (On axis swap). |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
 | Invert vertical | Off | Reverses which way up/down movement tilts the item. |
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |

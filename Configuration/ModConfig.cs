@@ -19,6 +19,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
+        public static ConfigEntry<TiltLock> LockTilt { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
@@ -84,6 +85,14 @@ namespace DeftHands.Configuration
                     "While held together with the modifier key, temporarily swaps which axis " +
                     "left/right mouse movement rotates big items around, overriding Alternative Rotation " +
                     "Axis for as long as it's held."));
+
+            LockTilt = config.Bind(
+                HeldItemControlSection,
+                "Lock tilt",
+                TiltLock.OnAxisSwap,
+                new ConfigDescription(
+                    "Up/down mouse movement doesn't tilt big items. Without Axis Swap: while you hold only the " +
+                    "modifier key. On Axis Swap: while you also hold the Axis Swap Key."));
 
             WallAttachmentRotationEnabled = config.Bind(
                 HeldItemControlSection,

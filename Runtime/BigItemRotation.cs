@@ -1,6 +1,4 @@
 using DeftHands.Configuration;
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -11,8 +9,6 @@ namespace DeftHands.Runtime
     /// </summary>
     internal static class BigItemRotation
     {
-        private static readonly FieldInfo BigItemLocalRotField = AccessTools.Field(typeof(GoPointer), "bigItemLocalRot");
-
         /// <summary>
         /// Rotates a big item freely relative to the camera. Vertical movement tilts it around the camera's right axis;
         /// horizontal movement rolls it around the camera's forward axis, or turns it around the camera's up axis while
@@ -84,11 +80,11 @@ namespace DeftHands.Runtime
         /// </summary>
         private static void TurnToHolderPose(PickupableItem item)
         {
-            if (BigItemLocalRotField == null)
+            if (GoPointerFields.BigItemLocalRot == null)
                 return;
 
             BigItemFacing.KeepFacing(item.held);
-            Quaternion rotationInHand = (Quaternion)BigItemLocalRotField.GetValue(item.held);
+            Quaternion rotationInHand = GoPointerFields.BigItemLocalRot(item.held);
             Quaternion offset = Quaternion.AngleAxis(item.heldRotationOffset, Vector3.right);
             item.transform.rotation = item.held.transform.rotation * offset * rotationInHand;
         }
@@ -99,11 +95,11 @@ namespace DeftHands.Runtime
         /// </summary>
         private static void StoreRotation(PickupableItem item)
         {
-            if (BigItemLocalRotField == null)
+            if (GoPointerFields.BigItemLocalRot == null)
                 return;
 
             Quaternion holderRotation = item.held.transform.rotation;
-            BigItemLocalRotField.SetValue(item.held, Quaternion.Inverse(holderRotation) * item.transform.rotation);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holderRotation) * item.transform.rotation;
             item.heldRotationOffset = 0f;
         }
     }

@@ -1,6 +1,4 @@
 using DeftHands.Configuration;
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -11,11 +9,6 @@ namespace DeftHands.Runtime
     /// </summary>
     internal static class BigItemFacing
     {
-        private static readonly FieldInfo BigItemLocalRotField = AccessTools.Field(typeof(GoPointer), "bigItemLocalRot");
-
-        private static readonly AccessTools.FieldRef<GoPointer, Quaternion> RotationInHand =
-            BigItemLocalRotField != null ? AccessTools.FieldRefAccess<GoPointer, Quaternion>(BigItemLocalRotField) : null;
-
         private static PickupableItem facingItem;
 
         /// <summary>The boat <see cref="facingInReference"/> is measured on, or null for the world.</summary>
@@ -37,7 +30,7 @@ namespace DeftHands.Runtime
         public static void KeepFacing(GoPointer holder)
         {
             PickupableItem heldItem = holder.GetHeldItem();
-            if (RotationInHand == null || !IsEnabled() || heldItem == null || !heldItem.big)
+            if (GoPointerFields.BigItemLocalRot == null || !IsEnabled() || heldItem == null || !heldItem.big)
             {
                 facingItem = null;
                 return;
@@ -48,7 +41,7 @@ namespace DeftHands.Runtime
 
             lastWrittenRotationInHand =
                 Quaternion.Inverse(holder.transform.rotation) * GetReferenceRotation(holder) * facingInReference;
-            RotationInHand(holder) = lastWrittenRotationInHand;
+            GoPointerFields.BigItemLocalRot(holder) = lastWrittenRotationInHand;
         }
 
         private static bool IsEnabled()
@@ -63,7 +56,7 @@ namespace DeftHands.Runtime
                 || ModConfig.HorizontalStabilization.Value != isHorizontallyStabilized
                 || ModConfig.HeadingStabilization.Value != isHeadingStabilized
                 || heldItem.heldRotationOffset != 0f
-                || !RotationInHand(holder).Equals(lastWrittenRotationInHand);
+                || !GoPointerFields.BigItemLocalRot(holder).Equals(lastWrittenRotationInHand);
         }
 
         /// <summary>
@@ -72,7 +65,8 @@ namespace DeftHands.Runtime
         /// </summary>
         private static void CaptureFacing(GoPointer holder, PickupableItem heldItem)
         {
-            Quaternion rotationInHand = Quaternion.AngleAxis(heldItem.heldRotationOffset, Vector3.right) * RotationInHand(holder);
+            Quaternion offset = Quaternion.AngleAxis(heldItem.heldRotationOffset, Vector3.right);
+            Quaternion rotationInHand = offset * GoPointerFields.BigItemLocalRot(holder);
             Quaternion facing = holder.transform.rotation * rotationInHand;
 
             facingItem = heldItem;

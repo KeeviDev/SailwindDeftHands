@@ -1,5 +1,9 @@
 # Changelog
 
+### Added
+
+- "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+
 ### Changed
 
 - Configuration file is reorganized: the main options now sit in the "General Features" and "Wall Attachment Features" sections; options that moved start from their defaults, so if you changed them, set them again

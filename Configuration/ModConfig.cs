@@ -21,6 +21,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> SwitchTurnRollAxes { get; private set; }
+        public static ConfigEntry<TiltLock> LockTilt { get; private set; }
         public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
@@ -121,6 +122,15 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Left/right mouse movement turns items around the vertical instead of rolling them, and the " +
                     "other way round while you hold the axis swap key."));
+
+            LockTilt = config.Bind(
+                ItemRotationSection,
+                "Lock tilt",
+                TiltLock.OnAxisSwap,
+                new ConfigDescription(
+                    "Up/down mouse movement doesn't tilt items: with \"Without Axis Swap\" while you hold only the " +
+                    "modifier key, with \"On Axis Swap\" while you also hold the axis swap key; with \"Off\", " +
+                    "tilting works in both cases."));
         }
 
         private static void BindKeys(ConfigFile config)

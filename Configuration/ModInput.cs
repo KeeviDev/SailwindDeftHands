@@ -30,6 +30,20 @@ namespace DeftHands.Configuration
         }
 
         /// <summary>
+        /// Returns whether vertical movement currently leaves big items at their tilt: Lock Tilt is
+        /// On Axis Swap and the axis swap key is held, or Without Axis Swap and it isn't.
+        /// </summary>
+        public static bool IsTiltLocked()
+        {
+            switch (ModConfig.LockTilt.Value)
+            {
+                case TiltLock.WithoutAxisSwap: return !IsAxisSwapKeyHeld();
+                case TiltLock.OnAxisSwap: return IsAxisSwapKeyHeld();
+                default: return false;
+            }
+        }
+
+        /// <summary>
         /// Returns <paramref name="input"/>, reversed while <paramref name="invert"/> is on.
         /// </summary>
         public static float ApplyInversion(float input, ConfigEntry<bool> invert)

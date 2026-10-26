@@ -103,6 +103,7 @@
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\ModInput.cs" />
     <Compile Include="Configuration\RotationWeightPreset.cs" />
+    <Compile Include="Configuration\TiltLock.cs" />
     <Compile Include="Runtime\RotationHandler.cs" />
     <Compile Include="Runtime\RotationInertia.cs" />
     <Compile Include="Runtime\BigItemRotation.cs" />

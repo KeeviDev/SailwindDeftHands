@@ -97,6 +97,10 @@
       <HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\lib\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
@@ -112,6 +116,8 @@
     <Compile Include="Runtime\RotationFrame.cs" />
     <Compile Include="Runtime\BigItemFacing.cs" />
     <Compile Include="Patches\BigItemFacingPatch.cs" />
+    <Compile Include="Runtime\RotationControlsHint.cs" />
+    <Compile Include="Patches\RotationControlsHintPatch.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />

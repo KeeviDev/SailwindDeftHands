@@ -22,6 +22,7 @@
 - "Push/pull on scroll wheel" is now "Preferred push/pull control" with "Off", "Scroll" and "Scroll With Modifier Key Only" options; "Scroll" also needs the modifier key while mouse rotation is off and legacy rotation is on, so plain scroll is available for vanilla rotation
 - "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only big items, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
 - Turning big items on the alternative axis now goes the other way by default
+- Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 
 ### Fixed

@@ -2,6 +2,8 @@
 
 ### Added
 
+- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item
+  - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - Controls hints for the mod's features
 - "Item Rotation" config section:
   - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level

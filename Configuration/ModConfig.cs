@@ -30,6 +30,8 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> KeepTiltingLevel { get; private set; }
         public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> ResetOrientationKey { get; private set; }
+        public static ConfigEntry<bool> ResetOrientationWithModifierKey { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
@@ -179,6 +181,20 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Hold it together with the modifier key to switch left/right mouse movement between rolling and " +
                     "turning items."));
+
+            ResetOrientationKey = config.Bind(
+                KeysSection,
+                "Reset orientation key",
+                new KeyboardShortcut(KeyCode.Mouse2),
+                new ConfigDescription(
+                    "Press it to reset the orientation of the held item."));
+
+            ResetOrientationWithModifierKey = config.Bind(
+                KeysSection,
+                "Reset orientation with modifier key",
+                false,
+                new ConfigDescription(
+                    "The reset key works only while you hold the modifier key."));
         }
 
         private static void BindAxisInversion(ConfigFile config)

@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 
 ## What you get
 
-- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it.
+- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it. Click the **mouse wheel** to set it straight again.
 - **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors.
@@ -60,6 +60,8 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | **Keys** | | |
 | Rotation modifier key | Left Alt | Hold it to rotate. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the rotation axis. |
+| Reset orientation key | Middle mouse button | Resets the held item's orientation. |
+| Reset orientation with modifier key | Off | The reset key works only while you hold the modifier key. |
 | **Axis Inversion** | | |
 | Invert vertical | Off | Reverses which way up/down movement tilts the item. |
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |

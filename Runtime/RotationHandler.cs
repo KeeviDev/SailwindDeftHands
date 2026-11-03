@@ -56,11 +56,11 @@ namespace DeftHands.Runtime
         /// OnScroll behaviour.
         /// </summary>
         public bool IsRotating =>
-            isCurrentItemRotatable
-            && ModInput.IsRotationModifierKeyHeld()
-            && currentItem != null
-            && currentItem.held != null
+            ModInput.IsRotationModifierKeyHeld()
+            && IsHoldingRotatableItem
             && (ModConfig.MouseRotationEnabled.Value || WallAttachmentRoll.IsActive);
+
+        private bool IsHoldingRotatableItem => isCurrentItemRotatable && currentItem != null && currentItem.held != null;
 
         public static RotationHandler GetInstance()
         {
@@ -90,6 +90,9 @@ namespace DeftHands.Runtime
 
         private void Update()
         {
+            if (ModInput.IsResetOrientationPressed() && IsHoldingRotatableItem)
+                ResetHeldItemOrientation();
+
             if (!IsRotating)
             {
                 wasRotating = false;
@@ -120,6 +123,22 @@ namespace DeftHands.Runtime
         private Vector2 ReadMouseInput()
         {
             return inertia.Apply(new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")), currentItem);
+        }
+
+        /// <summary>
+        /// Resets the held item's orientation in the hand: a small item gets the tilt its prefab is held at, a big item
+        /// stands upright in <see cref="RotationFrame"/>, facing the player's heading.
+        /// </summary>
+        private void ResetHeldItemOrientation()
+        {
+            inertia.Reset();
+            WallAttachmentRoll.ResetRoll();
+            float offset = currentItem.big ? 0f : PickupableItemUtils.GetPrefabHeldRotationOffset(currentItem);
+            currentItem.heldRotationOffset = offset;
+            quadrantRawOffset = offset;
+            lastAppliedQuadrantOffset = offset;
+            if (currentItem.big)
+                BigItemRotation.StandUpright(currentItem);
         }
 
         /// <summary>

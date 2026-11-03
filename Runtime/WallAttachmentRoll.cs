@@ -120,6 +120,21 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Resets the held item's roll to upright.
+        /// </summary>
+        public static void ResetRoll()
+        {
+            rollInput = 0f;
+            uprightInput = 0f;
+            isBigItemUpright = false;
+            if (hookSwingOwner == null)
+                return;
+
+            lastWrittenSwing = InputToRoll(rollInput);
+            HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
+        }
+
+        /// <summary>
         /// Drops roll input left inside the dead zone, so the next rotation starts from its centre.
         /// </summary>
         public static void RecenterDeadzone()

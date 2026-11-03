@@ -69,6 +69,16 @@ namespace DeftHands.Configuration
             return invert.Value ? -input : input;
         }
 
+        /// <summary>
+        /// Returns whether the Reset Orientation Key went down this frame, together with the Rotation Modifier Key
+        /// when Reset Orientation with Modifier Key is on.
+        /// </summary>
+        public static bool IsResetOrientationPressed()
+        {
+            return Input.GetKeyDown(ModConfig.ResetOrientationKey.Value.MainKey)
+                && (!ModConfig.ResetOrientationWithModifierKey.Value || IsRotationModifierKeyHeld());
+        }
+
         private static bool IsMainKeyHeld(ConfigEntry<KeyboardShortcut> shortcut)
         {
             return Input.GetKey(shortcut.Value.MainKey);

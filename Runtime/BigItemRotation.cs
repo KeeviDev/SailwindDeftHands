@@ -49,6 +49,22 @@ namespace DeftHands.Runtime
             StoreRotation(item);
         }
 
+        /// <summary>
+        /// Stands the held big <paramref name="item"/> upright in <see cref="RotationFrame"/>, facing the player's
+        /// heading.
+        /// </summary>
+        public static void StandUpright(PickupableItem item)
+        {
+            if (GoPointerFields.BigItemLocalRot == null)
+                return;
+
+            Transform holder = item.held.transform;
+            Vector3 up = RotationFrame.Up;
+            Vector3 heading = Vector3.Cross(RotationFrame.Flatten(holder.right), up);
+            Quaternion upright = Quaternion.LookRotation(heading, up);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holder.rotation) * upright;
+        }
+
         private static Vector3 GetTurnAxis(Transform camera)
         {
             return ModConfig.KeepTurningLevel.Value ? RotationFrame.Up : camera.up;

@@ -37,11 +37,18 @@ namespace DeftHands.Runtime
         /// <summary>Mouse movement below this on both axes is ignored.</summary>
         private const float MinAppliedInput = 0.001f;
 
+        /// <summary>Mouse movement is ignored for this many seconds after rotating starts.</summary>
+        private const float RotationStartDelay = 0.1f;
+
         private static RotationHandler instance;
 
         private PickupableItem currentItem;
 
         private bool isCurrentItemRotatable;
+
+        private bool wasRotating;
+
+        private float rotationStartTime;
 
         /// <summary>Weight-smoothed replacement for this frame's raw mouse delta.</summary>
         private float smoothedX;
@@ -103,10 +110,19 @@ namespace DeftHands.Runtime
         {
             if (!IsRotating)
             {
+                wasRotating = false;
                 ResetWeightState();
                 WallAttachmentRoll.RecenterDeadzone();
                 return;
             }
+
+            if (!wasRotating)
+            {
+                wasRotating = true;
+                rotationStartTime = Time.unscaledTime;
+            }
+            if (Time.unscaledTime - rotationStartTime < RotationStartDelay)
+                return;
 
             Vector2 input = ReadMouseInput();
             if (Mathf.Abs(input.x) < MinAppliedInput && Mathf.Abs(input.y) < MinAppliedInput)

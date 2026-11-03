@@ -2,6 +2,7 @@
 
 ### Added
 
+- Controls hints for the mod's features
 - "Item Rotation" config section:
   - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
   - Keep rolling level — big items roll around a level axis, even when you look up or down

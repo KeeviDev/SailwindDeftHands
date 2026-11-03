@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using DeftHands.Configuration;
+using DeftHands.Runtime;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace DeftHands
             try
             {
                 ModConfig.Bind(Config);
+                RotationControlsHint.WatchSettings(Config);
                 LogSettings();
                 ApplyHarmonyPatches();
             }

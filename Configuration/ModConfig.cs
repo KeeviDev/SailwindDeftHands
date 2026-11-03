@@ -15,6 +15,7 @@ namespace DeftHands.Configuration
 
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
         public static ConfigEntry<bool> PushPullScrollEnabled { get; private set; }
+        public static ConfigEntry<bool> PushPullWithModifierKey { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
         public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
@@ -49,6 +50,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Scroll the mouse wheel (without holding a modifier key) to move the held item closer or " +
                     "farther, instead of rotating it around its main axis."));
+
+            PushPullWithModifierKey = config.Bind(
+                HeldItemControlSection,
+                "Push/pull with modifier key",
+                false,
+                new ConfigDescription(
+                    "Scroll pushes and pulls the held item only while you hold the modifier key, so " +
+                    "plain scroll keeps the game's scroll rotation. Needs \"Push/pull on scroll wheel\" turned on."));
 
             LegacyRotationEnabled = config.Bind(
                 HeldItemControlSection,

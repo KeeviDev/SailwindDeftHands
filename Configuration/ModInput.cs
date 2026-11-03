@@ -14,6 +14,16 @@ namespace DeftHands.Configuration
             return IsMainKeyHeld(ModConfig.RotationModifierKey);
         }
 
+        /// <summary>
+        /// Returns whether the scroll wheel pushes and pulls the held item right now: Push/Pull on Scroll Wheel is
+        /// on, and the Rotation Modifier Key is held when Push/Pull with Modifier Key is on.
+        /// </summary>
+        public static bool IsPushPullScrollActive()
+        {
+            return ModConfig.PushPullScrollEnabled.Value
+                && (!ModConfig.PushPullWithModifierKey.Value || IsRotationModifierKeyHeld());
+        }
+
         public static bool IsAxisSwapKeyHeld()
         {
             return IsMainKeyHeld(ModConfig.AxisSwapKey);

@@ -8,6 +8,7 @@
   - Keep tilting level — on a boat, big items tilt around an axis level with the deck
   - Keep facing when looking up and down — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
   - Keep facing when turning around — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
+- "Push/pull with modifier key" option: push and pull with the modifier key and the scroll wheel, so plain scroll keeps the game's own rotation alongside mouse rotation
 - "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
 
 ### Changed

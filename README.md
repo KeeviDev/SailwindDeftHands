@@ -12,7 +12,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors.
-- **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther.
+- **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
 
 https://github.com/user-attachments/assets/24d5d3af-5c76-4b30-b9fd-e4f86cddca80
@@ -57,6 +57,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |
 | Invert turn | Off | Reverses left/right turning of big items on the alternative axis. |
 | Push/pull on scroll wheel | On | Scroll moves the held item closer or farther. |
+| Push/pull with modifier key | Off | Scroll pushes and pulls only while you hold the modifier key. |
 | Legacy rotation control | On | Keeps the game's original scroll rotation around. |
 | Rotation inertia | On | Heavy items take a moment to spin up and drift to a stop. |
 | Weight preset | Standard | How heavy things feel: Standard or the subtler Light. |

@@ -7,9 +7,9 @@ using HarmonyLib;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Turns the plain scroll wheel into push/pull distance control when Push/Pull on Scroll
-    /// Wheel is on, and blocks scroll-based rotation while mouse-rotating or when Legacy
-    /// Rotation Control is off. Applies to items without their own OnScroll behaviour.
+    /// Turns the scroll wheel into push/pull distance control while <see cref="ModInput.IsPushPullScrollActive"/>,
+    /// and blocks scroll-based rotation while mouse-rotating or when Legacy Rotation Control is off. Applies to
+    /// items without their own OnScroll behaviour.
     /// </summary>
     [HarmonyPatch(typeof(PickupableItem), "OnScroll")]
     public static class ScrollWheelPatch
@@ -22,7 +22,7 @@ namespace DeftHands.Patches
             if (PickupableItemUtils.HasCustomOnScroll(__instance))
                 return true;
 
-            if (ModConfig.PushPullScrollEnabled.Value && !NandTweaksCompat.IsAnyKeyPressed())
+            if (ModInput.IsPushPullScrollActive() && !NandTweaksCompat.IsAnyKeyPressed())
             {
                 PushPullHandler.GetInstance().Nudge(input / ScrollInputPerDistance);
                 return false;

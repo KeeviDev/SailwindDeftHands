@@ -16,18 +16,20 @@ namespace DeftHands.Configuration
 
         /// <summary>
         /// Gets whether the scroll wheel pushes and pulls the held item only while the Rotation Modifier Key is held:
-        /// Mouse Rotation Control is off and Legacy Rotation Control is on.
+        /// Preferred Push/Pull Control is set to scroll with the modifier key only, or Mouse Rotation Control is off
+        /// and Legacy Rotation Control is on.
         /// </summary>
         public static bool PushPullNeedsModifierKey =>
-            !ModConfig.MouseRotationEnabled.Value && ModConfig.LegacyRotationEnabled.Value;
+            ModConfig.PreferredPushPullControl.Value == PushPullMode.ScrollWithModifierKeyOnly
+            || (!ModConfig.MouseRotationEnabled.Value && ModConfig.LegacyRotationEnabled.Value);
 
         /// <summary>
-        /// Returns whether the scroll wheel pushes and pulls the held item right now: Push/Pull on Scroll Wheel is on,
-        /// with the Rotation Modifier Key held while <see cref="PushPullNeedsModifierKey"/>.
+        /// Returns whether the scroll wheel pushes and pulls the held item right now: Preferred Push/Pull Control is
+        /// on, with the Rotation Modifier Key held while <see cref="PushPullNeedsModifierKey"/>.
         /// </summary>
         public static bool IsPushPullScrollActive()
         {
-            return ModConfig.PushPullScrollEnabled.Value && (!PushPullNeedsModifierKey || IsRotationModifierKeyHeld());
+            return ModConfig.PushPullEnabled && (!PushPullNeedsModifierKey || IsRotationModifierKeyHeld());
         }
 
         public static bool IsAxisSwapKeyHeld()

@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Eases the held item to each distance Push/Pull on Scroll Wheel requests over the following
+    /// Eases the held item to each distance Preferred Push/Pull Control requests over the following
     /// frames. Adds each frame's share of the movement to the item's current distance rather than
     /// writing a cached target, since other code can change it between frames.
     /// </summary>

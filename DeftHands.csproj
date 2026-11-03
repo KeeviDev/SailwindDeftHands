@@ -102,6 +102,7 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\ModInput.cs" />
+    <Compile Include="Configuration\PushPullMode.cs" />
     <Compile Include="Configuration\RotationWeightPreset.cs" />
     <Compile Include="Configuration\TiltLock.cs" />
     <Compile Include="Runtime\RotationHandler.cs" />

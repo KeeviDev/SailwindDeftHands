@@ -19,7 +19,7 @@ namespace DeftHands.Patches
         /// Returns whether the holder of <paramref name="item"/> reads this frame's scroll input, turning the item with the
         /// game's rotate key held or passing the input to the item's scroll behaviour otherwise. The holder reads it while
         /// <see cref="GameRotation.TurnsInHand"/>, for an item with a scroll behaviour of its own, while the scroll drives
-        /// NANDTweaks' push/pull, and, without a rotate key, while Push/Pull on Scroll Wheel is on.
+        /// NANDTweaks' push/pull, and, without a rotate key, while Preferred Push/Pull Control is on.
         /// </summary>
         public static bool LetsHolderReadScroll(PickupableItem item)
         {
@@ -30,7 +30,7 @@ namespace DeftHands.Patches
                 return true;
 
             bool isRotateKeyHeld = GameInput.GetKey(InputName.RotateH) || NandTweaksCompat.IsRotateKeyPressed();
-            return GameRotation.TurnsInHand(item) || (!isRotateKeyHeld && ModConfig.PushPullScrollEnabled.Value);
+            return GameRotation.TurnsInHand(item) || (!isRotateKeyHeld && ModConfig.PushPullEnabled);
         }
 
         /// <summary>

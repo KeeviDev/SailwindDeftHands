@@ -6,7 +6,7 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Cancels the game's push of a held big item away from colliders (easy cargo placement)
-    /// while Push/Pull on Scroll Wheel presses the item hard against something.
+    /// while Preferred Push/Pull Control presses the item hard against something.
     /// </summary>
     [HarmonyPatch(typeof(PickupableItemCollisionChecker), nameof(PickupableItemCollisionChecker.GetDecollision))]
     public static class CargoPlacementOverridePatch

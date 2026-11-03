@@ -17,7 +17,7 @@ namespace DeftHands.Configuration
         private const string WeightSimulationSection = "Weight Simulation";
 
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
-        public static ConfigEntry<bool> PushPullScrollEnabled { get; private set; }
+        public static ConfigEntry<PushPullMode> PreferredPushPullControl { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
@@ -35,6 +35,9 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> InvertTurn { get; private set; }
         public static ConfigEntry<bool> RotationInertiaEnabled { get; private set; }
         public static ConfigEntry<RotationWeightPreset> WeightPreset { get; private set; }
+
+        /// <summary>Gets whether Preferred Push/Pull Control is set to any use of the scroll wheel.</summary>
+        public static bool PushPullEnabled => PreferredPushPullControl.Value != PushPullMode.Off;
 
         /// <summary>
         /// Binds every setting to <paramref name="config"/>, section by section in the order Configuration Manager shows
@@ -60,13 +63,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Hold the modifier key and move the mouse to rotate the item in your hand."));
 
-            PushPullScrollEnabled = config.Bind(
+            PreferredPushPullControl = config.Bind(
                 GeneralFeaturesSection,
-                "Push/pull on scroll wheel",
-                true,
+                "Preferred push/pull control",
+                PushPullMode.Scroll,
                 new ConfigDescription(
-                    "Scroll to move the held item closer or farther; while mouse rotation is off and legacy rotation is " +
-                    "on, only with the modifier key held."));
+                    "Scroll to move the held item closer or farther. \"Scroll\" uses plain scroll when that doesn't " +
+                    "take rotation away from you, and otherwise may need the modifier key held; \"Scroll With " +
+                    "Modifier Key Only\" always needs the modifier key."));
 
             LegacyRotationEnabled = config.Bind(
                 GeneralFeaturesSection,

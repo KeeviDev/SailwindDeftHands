@@ -75,10 +75,10 @@ namespace DeftHands.Runtime
         /// </summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
-            && isCurrentItemRotatable
             && ModInput.IsRotationModifierKeyHeld()
-            && currentItem != null
-            && currentItem.held != null;
+            && IsHoldingRotatableItem;
+
+        private bool IsHoldingRotatableItem => isCurrentItemRotatable && currentItem != null && currentItem.held != null;
 
         public static RotationHandler GetInstance()
         {
@@ -108,6 +108,9 @@ namespace DeftHands.Runtime
 
         private void Update()
         {
+            if (ModInput.IsResetOrientationPressed() && IsHoldingRotatableItem)
+                ResetHeldItemOrientation();
+
             if (!IsRotating)
             {
                 wasRotating = false;
@@ -129,6 +132,33 @@ namespace DeftHands.Runtime
                 return;
 
             RotateHeldItem(input.x, input.y);
+        }
+
+        /// <summary>
+        /// Resets the held item's orientation in the hand: a small item gets the tilt its prefab is held at, a big item
+        /// stands upright in <see cref="RotationFrame"/>, facing the player's heading.
+        /// </summary>
+        private void ResetHeldItemOrientation()
+        {
+            ResetWeightState();
+            WallAttachmentRoll.ResetRoll();
+            float offset = currentItem.big ? 0f : PickupableItemUtils.GetPrefabHeldRotationOffset(currentItem);
+            currentItem.heldRotationOffset = offset;
+            quadrantRawOffset = offset;
+            lastAppliedQuadrantOffset = offset;
+            if (currentItem.big)
+                StandBigItemUpright(currentItem);
+        }
+
+        private static void StandBigItemUpright(PickupableItem item)
+        {
+            if (GoPointerFields.BigItemLocalRot == null)
+                return;
+
+            Transform holder = item.held.transform;
+            Vector3 up = RotationFrame.Up;
+            Vector3 heading = Vector3.Cross(RotationFrame.Flatten(holder.right), up);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holder.rotation) * Quaternion.LookRotation(heading, up);
         }
 
         /// <summary>

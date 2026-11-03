@@ -8,7 +8,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 
 ## What you get
 
-- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it.
+- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it. Click the **mouse wheel** to set it straight again.
 - **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors.
@@ -47,6 +47,8 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Alternative rotation axis | Off | Left/right turns big items around the vertical axis instead of rolling them. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the axis above. |
 | Lock tilt | On axis swap | Up/down movement doesn't tilt big items while you hold the modifier key alone (Without axis swap) or with the axis swap key (On axis swap). |
+| Reset orientation key | Middle mouse button | Resets the held item's orientation. |
+| Reset orientation with modifier key | Off | The reset key works only while you hold the modifier key. |
 | Keep turning level | On | Big items turn around the vertical (the deck's on a boat), so they stay level. |
 | Keep rolling level | On | Big items roll around a level axis, even when you look up or down. |
 | Keep tilting level | On | On a boat, big items tilt around an axis level with the deck. |

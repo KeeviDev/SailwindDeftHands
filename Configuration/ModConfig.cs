@@ -22,6 +22,8 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<TiltLock> LockTilt { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> ResetOrientationKey { get; private set; }
+        public static ConfigEntry<bool> ResetOrientationWithModifierKey { get; private set; }
         public static ConfigEntry<bool> KeepTurningLevel { get; private set; }
         public static ConfigEntry<bool> KeepRollingLevel { get; private set; }
         public static ConfigEntry<bool> KeepTiltingLevel { get; private set; }
@@ -108,6 +110,21 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Up/down mouse movement doesn't tilt big items. Without Axis Swap: while you hold only the " +
                     "modifier key. On Axis Swap: while you also hold the Axis Swap Key."));
+
+            ResetOrientationKey = config.Bind(
+                HeldItemControlSection,
+                "Reset orientation key",
+                new KeyboardShortcut(KeyCode.Mouse2),
+                new ConfigDescription(
+                    "Press it to reset the orientation of the held item. Crates, barrels and other big items stand " +
+                    "upright, facing the way you look."));
+
+            ResetOrientationWithModifierKey = config.Bind(
+                HeldItemControlSection,
+                "Reset orientation with modifier key",
+                false,
+                new ConfigDescription(
+                    "The Reset Orientation Key works only while you hold the modifier key."));
 
             KeepTurningLevel = config.Bind(
                 HeldItemOrientationSection,

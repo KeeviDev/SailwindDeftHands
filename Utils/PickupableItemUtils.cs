@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine;
 
 namespace DeftHands.Utils
 {
@@ -21,6 +22,21 @@ namespace DeftHands.Utils
             }
 
             return hasCustomOnScroll;
+        }
+
+        /// <summary>
+        /// Returns the heldRotationOffset of the item's prefab, or 0 for an item that has no prefab.
+        /// </summary>
+        public static float GetPrefabHeldRotationOffset(PickupableItem item)
+        {
+            SaveablePrefab saveable = item.GetComponent<SaveablePrefab>();
+            GameObject[] prefabs = PrefabsDirectory.instance != null ? PrefabsDirectory.instance.directory : null;
+            if (saveable == null || prefabs == null || saveable.prefabIndex < 0 || saveable.prefabIndex >= prefabs.Length)
+                return 0f;
+
+            GameObject prefab = prefabs[saveable.prefabIndex];
+            PickupableItem prefabItem = prefab != null ? prefab.GetComponent<PickupableItem>() : null;
+            return prefabItem != null ? prefabItem.heldRotationOffset : 0f;
         }
 
         private static bool DeclaresCustomOnScroll(Type itemType)

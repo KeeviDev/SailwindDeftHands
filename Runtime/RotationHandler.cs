@@ -8,7 +8,7 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Rotates the held item with mouse movement while the rotation activation key is held,
+    /// Rotates the held item with mouse movement while the rotation modifier key is held,
     /// optionally smoothed to make heavier items feel weighted.
     /// </summary>
     public class RotationHandler : MonoBehaviour
@@ -67,7 +67,7 @@ namespace DeftHands.Runtime
         /// <summary>Gets whether the player is currently mouse-rotating a held item.</summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
-            && ModInput.IsRotationActivationKeyHeld()
+            && ModInput.IsRotationModifierKeyHeld()
             && currentItem != null
             && currentItem.held != null;
 

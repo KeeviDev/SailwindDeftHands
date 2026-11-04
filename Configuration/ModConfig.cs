@@ -15,7 +15,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
         public static ConfigEntry<bool> PushPullScrollEnabled { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> RotationActivationKey { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
         public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
         public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
@@ -33,7 +33,7 @@ namespace DeftHands.Configuration
                 "Mouse rotation control",
                 true,
                 new ConfigDescription(
-                    "Rotate held items with mouse movement while holding the Rotation Activation Key below."));
+                    "Rotate held items with mouse movement while holding the Rotation Modifier Key below."));
 
             PushPullScrollEnabled = config.Bind(
                 HeldItemControlSection,
@@ -52,9 +52,9 @@ namespace DeftHands.Configuration
                     "NANDTweaks' third axis if you have that mod installed. Turn this off to rotate items " +
                     "with the mouse-drag method only."));
 
-            RotationActivationKey = config.Bind(
+            RotationModifierKey = config.Bind(
                 HeldItemControlSection,
-                "Rotation activation key",
+                "Rotation modifier key",
                 new KeyboardShortcut(KeyCode.LeftAlt),
                 new ConfigDescription(
                     "The key or mouse button you hold down while moving the mouse to rotate the held item."));
@@ -81,7 +81,7 @@ namespace DeftHands.Configuration
                 "Axis swap key",
                 new KeyboardShortcut(KeyCode.Mouse1),
                 new ConfigDescription(
-                    "While held together with the Rotation Activation Key, temporarily swaps which axis " +
+                    "While held together with the modifier key, temporarily swaps which axis " +
                     "left/right mouse movement rotates big items around, overriding Alternative Rotation " +
                     "Axis for as long as it's held."));
 

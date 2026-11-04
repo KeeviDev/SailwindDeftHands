@@ -1,5 +1,9 @@
 # Changelog
 
+### Changed
+
+- "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
+
 ### Fixed
 
 - Mouse rotation and push/pull no longer stop working on an item that another mod keeps in your hand when you try to drop it, such as a braced Tent and Plank pole

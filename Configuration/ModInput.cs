@@ -9,9 +9,9 @@ namespace DeftHands.Configuration
     /// </summary>
     internal static class ModInput
     {
-        public static bool IsRotationActivationKeyHeld()
+        public static bool IsRotationModifierKeyHeld()
         {
-            return IsMainKeyHeld(ModConfig.RotationActivationKey);
+            return IsMainKeyHeld(ModConfig.RotationModifierKey);
         }
 
         public static bool IsAxisSwapKeyHeld()

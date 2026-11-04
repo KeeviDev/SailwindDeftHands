@@ -42,7 +42,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Setting | Default | What it does |
 |---|---|---|
 | Mouse rotation control | On | Rotate held items by moving the mouse. |
-| Rotation activation key | Left Alt | Hold it to rotate. |
+| Rotation modifier key | Left Alt | Hold it to rotate. |
 | Rotation sensitivity | 2 | How fast items turn (0.5–10). |
 | Alternative rotation axis | Off | Left/right turns big items around the vertical axis instead of rolling them. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the axis above. |

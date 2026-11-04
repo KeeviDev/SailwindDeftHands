@@ -30,15 +30,21 @@ namespace DeftHands.Runtime
                 : rotation;
         }
 
+        /// <summary>Converts an attachment-space rotation to the visible world.</summary>
+        public static Quaternion ToVisibleWorld(ShipItem item, Quaternion rotation)
+        {
+            return IsOnBoat(item)
+                ? item.currentActualBoat.rotation * Quaternion.Inverse(item.currentWalkCol.rotation) * rotation
+                : rotation;
+        }
+
         /// <summary>
         /// Returns the visible-world direction that's up in attachment space: the boat's up on a
         /// boat, world up otherwise.
         /// </summary>
         public static Vector3 UpInWorld(ShipItem item)
         {
-            return IsOnBoat(item)
-                ? item.currentActualBoat.rotation * Quaternion.Inverse(item.currentWalkCol.rotation) * Vector3.up
-                : Vector3.up;
+            return ToVisibleWorld(item, Quaternion.identity) * Vector3.up;
         }
 
         private static bool IsOnBoat(ShipItem item)

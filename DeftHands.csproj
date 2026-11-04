@@ -97,6 +97,10 @@
       <HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\lib\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>..\lib\UnityEngine.TextRenderingModule.dll</HintPath>
       <Private>False</Private>
@@ -110,7 +114,11 @@
     <Compile Include="Configuration\TiltLock.cs" />
     <Compile Include="Runtime\RotationHandler.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
+    <Compile Include="Runtime\HoldDepthTracker.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
+    <Compile Include="Runtime\HeldItemAside.cs" />
+    <Compile Include="Runtime\WallAttachmentAim.cs" />
+    <Compile Include="Runtime\WallPlacement.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
     <Compile Include="Runtime\GoPointerFields.cs" />
     <Compile Include="Runtime\RotationFrame.cs" />
@@ -124,6 +132,7 @@
     <Compile Include="Patches\LegacyRotationBlockPatch.cs" />
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
+    <Compile Include="Patches\WallAttachmentAimPatch.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />

@@ -1,5 +1,6 @@
 using DeftHands.Compat;
 using DeftHands.Configuration;
+using DeftHands.Runtime;
 using DeftHands.Utils;
 using HarmonyLib;
 using System.Collections.Generic;
@@ -10,8 +11,9 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Blocks GoPointer's built-in scroll-wheel rotation (both axes) when Legacy Rotation
-    /// Control is off, except on items with their own OnScroll behaviour and while the scroll
-    /// drives NANDTweaks' push/pull or Push/Pull on Scroll Wheel.
+    /// Control is off or <see cref="WallPlacement.LocksRotationAxis"/>, except on items with their
+    /// own OnScroll behaviour and while the scroll drives NANDTweaks' push/pull or Push/Pull on
+    /// Scroll Wheel.
     /// </summary>
     [HarmonyPatch(typeof(GoPointer), "LateUpdate")]
     public static class LegacyRotationBlockPatch
@@ -26,7 +28,7 @@ namespace DeftHands.Patches
 
         private static bool ShouldBlockRotation(PickupableItem heldItem)
         {
-            if (ModConfig.LegacyRotationEnabled.Value || heldItem == null)
+            if (heldItem == null || (ModConfig.LegacyRotationEnabled.Value && !WallPlacement.LocksRotationAxis(heldItem)))
                 return false;
 
             if (PickupableItemUtils.HasCustomOnScroll(heldItem) || NandTweaksCompat.IsPushKeyPressed())

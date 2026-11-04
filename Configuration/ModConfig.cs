@@ -30,6 +30,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> KeepFacingWhenLookingUpAndDown { get; private set; }
         public static ConfigEntry<bool> KeepFacingWhenTurningAround { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
+        public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
@@ -173,6 +174,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Lets you control the angle items are hung on walls, ceilings and floors: " +
                     "roll a wall-attachable item with the mouse and it attaches at that angle."));
+
+            EasyWallHanging = config.Bind(
+                HeldItemControlSection,
+                "Easy wall hanging",
+                true,
+                new ConfigDescription(
+                    "Makes hanging items easier: they hang where you look, and the item in your hand moves to the " +
+                    "lower right of your view so it doesn't cover the spot."));
 
             InvertVertical = config.Bind(
                 AxisInversionSection,

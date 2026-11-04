@@ -189,9 +189,11 @@ namespace DeftHands.Runtime
         private bool MoveBigItem(float step)
         {
             ref Vector3 actual = ref GoPointerFields.DecolLocalPos(currentItem.held);
+            float depthBefore = actual.z;
             float requestedDepth = actual.z + step;
             actual.z = ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance);
             GoPointerFields.BigItemLocalPos(currentItem.held).z = actual.z;
+            HoldDepthTracker.GetInstance().AddOwnMove(actual.z - depthBefore);
 
             return actual.z == requestedDepth;
         }

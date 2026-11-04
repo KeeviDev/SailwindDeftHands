@@ -200,7 +200,8 @@ namespace DeftHands.Runtime
         /// Applies the held item's roll to <paramref name="attachRot"/>, the rotation the game
         /// computed for attaching <paramref name="item"/> at <paramref name="attachPos"/>, both in
         /// <see cref="AttachmentSpace"/>. On a ceiling or floor the item instead attaches turned
-        /// the way it looks in the player's hand.
+        /// the way it looks in the player's hand, or, while <see cref="WallPlacement.LocksRotationAxis"/>,
+        /// at its roll relative to the player's view.
         /// </summary>
         /// <returns>True if <paramref name="attachRot"/> was changed.</returns>
         public static bool TryRollAttachment(ShipItem item, Vector3 attachPos, ref Quaternion attachRot)
@@ -217,16 +218,45 @@ namespace DeftHands.Runtime
                     return false;
 
                 Vector3 cameraPosition = AttachmentSpace.ToAttachmentSpace(item, camera.transform.position);
-                attachRot = FaceSurfaceAsSeen(heldRotation, intoSurface, attachPos - cameraPosition);
+                attachRot = FaceSurface(item, heldRotation, intoSurface, attachPos - cameraPosition);
                 return true;
             }
 
-            float roll = item.big ? MeasureRoll(heldRotation, Vector3.up) : InputToRoll(rollInput);
+            float roll = MeasureWallRoll(item, heldRotation, intoSurface);
             if (roll == 0f)
                 return false;
 
             attachRot *= Quaternion.AngleAxis(roll, Vector3.forward);
             return true;
+        }
+
+        /// <summary>
+        /// Returns the rotation the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches at
+        /// on a ceiling or floor it faces along <paramref name="intoSurface"/>.
+        /// </summary>
+        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
+        private static Quaternion FaceSurface(
+            ShipItem item, Quaternion heldRotation, Vector3 intoSurface, Vector3 viewDirection)
+        {
+            if (!WallPlacement.LocksRotationAxis(item))
+                return FaceSurfaceAsSeen(heldRotation, intoSurface, viewDirection);
+
+            Quaternion holderRotation = AttachmentSpace.ToAttachmentSpace(item, item.held.transform.rotation);
+            return FaceSurfaceAtViewRoll(heldRotation, holderRotation, intoSurface, viewDirection);
+        }
+
+        /// <summary>
+        /// Returns how far the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches rolled
+        /// from upright on a wall it faces along <paramref name="intoWall"/>.
+        /// </summary>
+        private static float MeasureWallRoll(ShipItem item, Quaternion heldRotation, Vector3 intoWall)
+        {
+            if (!item.big)
+                return InputToRoll(rollInput);
+
+            return WallPlacement.LocksRotationAxis(item)
+                ? MeasureBigItemRoll(heldRotation, intoWall)
+                : MeasureRoll(heldRotation, Vector3.up);
         }
 
         /// <summary>
@@ -341,6 +371,29 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Returns a rotation facing <paramref name="intoSurface"/>, rolled from the direction that looks up on screen
+        /// by as much as <paramref name="heldRotation"/> is rolled around its own forward axis from the holder's up.
+        /// </summary>
+        /// <param name="holderRotation">The rotation of the item's holder.</param>
+        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
+        private static Quaternion FaceSurfaceAtViewRoll(
+            Quaternion heldRotation, Quaternion holderRotation, Vector3 intoSurface, Vector3 viewDirection)
+        {
+            Vector3 forward = heldRotation * Vector3.forward;
+            Vector3 holderUp = holderRotation * Vector3.up;
+            Vector3 reference = Vector3.ProjectOnPlane(holderUp, forward);
+            if (reference.sqrMagnitude < 1e-6f)
+                reference = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, forward);
+
+            float roll = Vector3.SignedAngle(reference, heldRotation * Vector3.up, forward);
+            Vector3 surfaceUp = SeenFromSurface(holderUp, viewDirection, intoSurface);
+            if (surfaceUp == Vector3.zero)
+                surfaceUp = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, intoSurface);
+
+            return Quaternion.LookRotation(intoSurface, surfaceUp) * Quaternion.AngleAxis(roll, Vector3.forward);
+        }
+
+        /// <summary>
         /// Returns the direction perpendicular to <paramref name="normal"/> that lies along the same
         /// line on screen as <paramref name="direction"/>, pointing the same way, or
         /// <see cref="Vector3.zero"/> if there's no such direction.
@@ -354,6 +407,20 @@ namespace DeftHands.Runtime
                 return Vector3.zero;
 
             return Vector3.Dot(result, direction) < 0f ? -result.normalized : result.normalized;
+        }
+
+        /// <summary>
+        /// Returns how far a big item held at <paramref name="heldRotation"/> attaches rolled from
+        /// upright on a wall it faces along <paramref name="intoWall"/>: its own roll when it faces a
+        /// wall in the hand, otherwise its roll once turned the shortest way to face the wall.
+        /// </summary>
+        private static float MeasureBigItemRoll(Quaternion heldRotation, Vector3 intoWall)
+        {
+            Vector3 forward = heldRotation * Vector3.forward;
+            Quaternion facing = FacesWall(forward, Vector3.up)
+                ? heldRotation
+                : Quaternion.FromToRotation(forward, intoWall) * heldRotation;
+            return MeasureRoll(facing, Vector3.up);
         }
 
         /// <summary>

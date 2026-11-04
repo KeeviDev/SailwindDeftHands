@@ -8,8 +8,8 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Turns the scroll wheel into push/pull distance control while <see cref="ModInput.IsPushPullScrollActive"/>,
-    /// and blocks scroll-based rotation while mouse-rotating or when Legacy Rotation Control is off. Applies to
-    /// items without their own OnScroll behaviour.
+    /// and blocks scroll-based rotation while mouse-rotating, when Legacy Rotation Control is off or while
+    /// <see cref="WallPlacement.LocksRotationAxis"/>. Applies to items without their own OnScroll behaviour.
     /// </summary>
     [HarmonyPatch(typeof(PickupableItem), "OnScroll")]
     public static class ScrollWheelPatch
@@ -31,7 +31,7 @@ namespace DeftHands.Patches
             if (RotationHandler.GetInstance().IsRotating)
                 return false;
 
-            return ModConfig.LegacyRotationEnabled.Value;
+            return ModConfig.LegacyRotationEnabled.Value && !WallPlacement.LocksRotationAxis(__instance);
         }
     }
 }

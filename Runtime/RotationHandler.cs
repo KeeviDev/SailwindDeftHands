@@ -210,10 +210,17 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Applies this frame's input to the held item's rotation. Horizontal movement on the roll
-        /// axis also rolls wall-attachable small items for attaching.
+        /// axis also rolls wall-attachable small items for attaching. While
+        /// <see cref="WallPlacement.LocksRotationAxis"/>, only horizontal movement turns the item.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
+            if (WallPlacement.LocksRotationAxis(currentItem))
+            {
+                TurnAroundSurfaceAxis(horizontalInput);
+                return;
+            }
+
             Camera mainCamera = Camera.main;
             if (mainCamera == null)
                 return;
@@ -232,6 +239,28 @@ namespace DeftHands.Runtime
                 RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
                 currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
+        }
+
+        /// <summary>
+        /// Turns the held item being placed around its own axis into the surface by
+        /// <paramref name="horizontalInput"/>: a small item through its attachment roll, a big item in
+        /// the hand, pausing at upright while turning through it.
+        /// </summary>
+        private void TurnAroundSurfaceAxis(float horizontalInput)
+        {
+            float sensitivity = ModConfig.RotationSensitivity.Value;
+            float roll = -ApplyInversion(horizontalInput, ModConfig.InvertRoll);
+            if (!currentItem.big)
+            {
+                WallAttachmentRoll.AddRollInput(roll * sensitivity * SingleAxisSpeedMultiplier);
+                return;
+            }
+
+            Transform item = currentItem.transform;
+            TurnToHolderPose(currentItem);
+            WallAttachmentRoll.RollBigItem(item, item.forward, roll * sensitivity);
+            WallAttachmentRoll.HoldBigItemUpright(item);
+            StoreBigItemRotation(currentItem);
         }
 
         /// <summary>

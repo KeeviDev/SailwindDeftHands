@@ -2,6 +2,7 @@
 
 ### Added
 
+- **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look (can be turned off with the new "Easy wall hanging" option)
 - **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - Controls hints for the mod's features

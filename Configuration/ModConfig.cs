@@ -19,6 +19,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
         public static ConfigEntry<PushPullMode> PreferredPushPullControl { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
+        public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
         public static ConfigEntry<bool> HeadingStabilization { get; private set; }
@@ -85,6 +86,14 @@ namespace DeftHands.Configuration
 
         private static void BindWallAttachmentFeatures(ConfigFile config)
         {
+            EasyWallHanging = config.Bind(
+                WallAttachmentFeaturesSection,
+                "Easy wall hanging",
+                true,
+                new ConfigDescription(
+                    "The item in your hand moves to the lower right of your view so it doesn't cover the spot, and " +
+                    "items hang exactly at the point where you look."));
+
             WallAttachmentRotationEnabled = config.Bind(
                 WallAttachmentFeaturesSection,
                 "Wall attachment rotation",

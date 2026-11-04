@@ -8,18 +8,24 @@ namespace DeftHands.Runtime
     /// <summary>
     /// Shows the controls hint next to a carried big item: the rotation modifier key, the key combination that
     /// swaps to the other axis and the scroll wheel's push and pull, added to the game's controls text for the held
-    /// item.
+    /// item. While <see cref="WallPlacement.LocksRotationAxis"/>, the modifier key only rolls the item.
     /// </summary>
     internal static class RotationControlsHint
     {
         private static string hint;
+
+        private static string placingHint;
 
         /// <summary>
         /// Rebuilds the hint after any setting in <paramref name="config"/> changes.
         /// </summary>
         public static void WatchSettings(ConfigFile config)
         {
-            config.SettingChanged += (sender, args) => hint = null;
+            config.SettingChanged += (sender, args) =>
+            {
+                hint = null;
+                placingHint = null;
+            };
         }
 
         /// <summary>
@@ -32,13 +38,14 @@ namespace DeftHands.Runtime
             if (controlsText == null || !ShowsHintFor(item))
                 return;
 
-            if (hint == null)
-                hint = Build();
-            if (hint.Length == 0)
+            string itemHint = WallPlacement.LocksRotationAxis(item)
+                ? placingHint ?? (placingHint = Build(true))
+                : hint ?? (hint = Build(false));
+            if (itemHint.Length == 0)
                 return;
 
             string text = controlsText.text;
-            controlsText.text = text.Length == 0 ? hint : text + "\n" + hint;
+            controlsText.text = text.Length == 0 ? itemHint : text + "\n" + itemHint;
         }
 
         private static bool ShowsHintFor(PickupableItem item)
@@ -49,14 +56,16 @@ namespace DeftHands.Runtime
                 && !RotationHandler.GetInstance().IsRotating;
         }
 
-        private static string Build()
+        private static string Build(bool placing)
         {
             KeyCode modifierKey = ModConfig.RotationModifierKey.Value.MainKey;
             if (modifierKey == KeyCode.None)
                 return "";
 
             var lines = new List<string>();
-            if (ModConfig.MouseRotationEnabled.Value)
+            if (placing)
+                lines.Add(NameOf(modifierKey) + " roll");
+            else if (ModConfig.MouseRotationEnabled.Value)
                 lines.Add(BuildRotationLines(modifierKey));
 
             if (ModConfig.PushPullEnabled)

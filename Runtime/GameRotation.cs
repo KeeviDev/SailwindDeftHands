@@ -22,11 +22,12 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether the game's scroll-wheel rotation turns the held <paramref name="item"/> in the hand: Legacy
-        /// Rotation Control is on or Mouse Rotation Control is off.
+        /// Rotation Control is on or Mouse Rotation Control is off, and the item isn't
+        /// <see cref="WallPlacement.LocksRotationAxis"/>.
         /// </summary>
         public static bool TurnsInHand(PickupableItem item)
         {
-            return WorksInHand;
+            return WorksInHand && !WallPlacement.LocksRotationAxis(item);
         }
     }
 }

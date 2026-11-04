@@ -11,7 +11,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it. Click the **mouse wheel** to set it straight again.
 - **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
-- **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors.
+- **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
 - **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
 
@@ -46,6 +46,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Preferred push/pull control | Scroll | Scroll moves the held item closer or farther; Scroll With Modifier Key Only does it only with the modifier key, and so does Scroll while mouse rotation is off and legacy rotation is on. |
 | Legacy rotation control | On | Keeps the game's own scroll rotation alongside mouse rotation in your hand. |
 | **Wall Attachment Features** | | |
+| Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
 | **Item Carrying** | | |
 | Horizontal stabilization | On | Big items keep facing the same way, in the world or on deck, when you look up or down. |

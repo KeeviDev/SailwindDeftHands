@@ -5,8 +5,8 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Accessors for the private <see cref="GoPointer"/> fields that keep a held big item's pose in the holder's space.
-    /// Each is null when the game has no field of that name and type.
+    /// Accessors for private <see cref="GoPointer"/> fields. Each is null when the game has no field of that name and
+    /// type.
     /// </summary>
     internal static class GoPointerFields
     {
@@ -21,5 +21,9 @@ namespace DeftHands.Runtime
         /// <summary>The item's rotation in the holder's space before its heldRotationOffset is applied.</summary>
         public static readonly AccessTools.FieldRef<GoPointer, Quaternion> BigItemLocalRot =
             ReflectionUtils.FindFieldRef<GoPointer, Quaternion>("bigItemLocalRot");
+
+        /// <summary>The button or item the holder points at, or null if it points at none.</summary>
+        public static readonly AccessTools.FieldRef<GoPointer, GoPointerButton> PointedAtButton =
+            ReflectionUtils.FindFieldRef<GoPointer, GoPointerButton>("pointedAtButton");
     }
 }

@@ -94,7 +94,7 @@ namespace DeftHands.Runtime
         /// Sets the big item's rotation to the one its holding GoPointer gives it this frame, with
         /// <see cref="BigItemFacing"/> applied first.
         /// </summary>
-        private static void TurnToHolderPose(PickupableItem item)
+        public static void TurnToHolderPose(PickupableItem item)
         {
             if (GoPointerFields.BigItemLocalRot == null)
                 return;
@@ -109,7 +109,7 @@ namespace DeftHands.Runtime
         /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, so it
         /// persists on following frames, and resets the item's heldRotationOffset.
         /// </summary>
-        private static void StoreRotation(PickupableItem item)
+        public static void StoreRotation(PickupableItem item)
         {
             if (GoPointerFields.BigItemLocalRot == null)
                 return;

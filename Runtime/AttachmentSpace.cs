@@ -1,5 +1,5 @@
+using DeftHands.Utils;
 using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -11,10 +11,8 @@ namespace DeftHands.Runtime
     /// </summary>
     internal static class AttachmentSpace
     {
-        private static readonly FieldInfo OnBoatField = AccessTools.Field(typeof(ItemRigidbody), "onBoat");
-
         private static readonly AccessTools.FieldRef<ItemRigidbody, bool> IsBodyOnBoat =
-            OnBoatField != null ? AccessTools.FieldRefAccess<ItemRigidbody, bool>(OnBoatField) : null;
+            ReflectionUtils.FindFieldRef<ItemRigidbody, bool>("onBoat");
 
         /// <summary>Converts a visible-world point to attachment space.</summary>
         public static Vector3 ToAttachmentSpace(ShipItem item, Vector3 point)

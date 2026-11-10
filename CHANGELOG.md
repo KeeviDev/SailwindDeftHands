@@ -8,6 +8,9 @@
   - Keep tilting level — on a boat, big items tilt around an axis level with the deck
   - Keep facing when looking up and down — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
   - Keep facing when turning around — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
+- Extended small items rotation: turn, push or pull a small item and you hold it like a big item, free to turn any way and move closer or farther; it goes back into your hand after a few seconds without turning or moving it, when you use it or with the reset key
+  - Pick a small item up with the modifier key held to hold it this way right away
+  - Can be turned off with the new "Extended small items rotation" option
 - Reset orientation: click the mouse wheel to reset the orientation of the held item
   - Change the key with the new "Reset orientation key" option, or make it work only together with the modifier key with "Reset orientation with modifier key"
 - Easy wall hanging: items hang where you look, and the item in your hand moves to the lower right of your view so it no longer covers the spot

@@ -31,6 +31,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> KeepFacingWhenTurningAround { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
+        public static ConfigEntry<bool> ExtendedSmallItemsRotation { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
@@ -117,8 +118,8 @@ namespace DeftHands.Configuration
                 "Reset orientation key",
                 new KeyboardShortcut(KeyCode.Mouse2),
                 new ConfigDescription(
-                    "Press it to reset the orientation of the held item. Crates, barrels and other big items stand " +
-                    "upright, facing the way you look."));
+                    "Press it to reset the orientation of the held item: big items stand upright, facing the way " +
+                    "you look, and small items go back into your hand."));
 
             ResetOrientationWithModifierKey = config.Bind(
                 HeldItemControlSection,
@@ -182,6 +183,13 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Makes hanging items easier: they hang where you look, and the item in your hand moves to the " +
                     "lower right of your view so it doesn't cover the spot."));
+
+            ExtendedSmallItemsRotation = config.Bind(
+                HeldItemControlSection,
+                "Extended small items rotation",
+                true,
+                new ConfigDescription(
+                    "Turn, push or pull a small item and you hold it like a big item."));
 
             InvertVertical = config.Bind(
                 AxisInversionSection,

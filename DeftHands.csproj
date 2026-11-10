@@ -115,6 +115,8 @@
     <Compile Include="Runtime\RotationHandler.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
     <Compile Include="Runtime\HoldDepthTracker.cs" />
+    <Compile Include="Runtime\ExtendedHold.cs" />
+    <Compile Include="Runtime\HeldItemVisibility.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
     <Compile Include="Runtime\HeldItemAside.cs" />
     <Compile Include="Runtime\WallAttachmentAim.cs" />
@@ -133,6 +135,7 @@
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
     <Compile Include="Patches\WallAttachmentAimPatch.cs" />
+    <Compile Include="Patches\HeldLikeBigPatch.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />

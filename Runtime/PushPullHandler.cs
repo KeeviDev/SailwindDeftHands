@@ -62,6 +62,9 @@ namespace DeftHands.Runtime
 
         private bool overridesPushOut;
 
+        /// <summary>Gets whether a push or pull is still easing the held item to its new distance.</summary>
+        public bool IsMoving => requestedOffset != appliedOffset;
+
         public static PushPullHandler GetInstance()
         {
             if (instance == null)
@@ -116,6 +119,14 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Drops any push or pull still easing the held item to its new distance.
+        /// </summary>
+        public void Stop()
+        {
+            ResetSmoothing();
+        }
+
+        /// <summary>
         /// Queues a distance change for the held item, eased in over the following frames on
         /// top of any movement still in progress.
         /// </summary>
@@ -164,25 +175,25 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Moves the held item closer or farther, within the distance limits for its kind of item.
+        /// Moves the held item closer or farther, within the distance limits for its kind of item, holding a small item
+        /// like a big item first when it can be.
         /// </summary>
         /// <param name="step">Distance to add; positive moves the item farther away.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
         private bool MoveHeldItem(float step)
         {
+            if (GoPointerFields.BigItemLocalPos != null && GoPointerFields.DecolLocalPos != null
+                && ExtendedHold.GetInstance().TryHoldLikeBig(currentItem))
+                return MoveBigItem(step);
+
             float requestedHoldDistance = currentItem.holdDistance + step;
             currentItem.holdDistance = ClampTowardRange(currentItem.holdDistance, requestedHoldDistance, MinHoldDistance, MaxHoldDistance);
-            bool isWithinLimits = currentItem.holdDistance == requestedHoldDistance;
-
-            if (currentItem.big && GoPointerFields.BigItemLocalPos != null && GoPointerFields.DecolLocalPos != null)
-                isWithinLimits = MoveBigItem(step);
-
-            return isWithinLimits;
+            return currentItem.holdDistance == requestedHoldDistance;
         }
 
         /// <summary>
-        /// Moves a big item's actual position (the holding GoPointer's decolLocalPos) and brings its
-        /// intended position (bigItemLocalPos) to the same depth.
+        /// Moves the actual position of an item held like a big item (the holding GoPointer's decolLocalPos) and brings
+        /// its intended position (bigItemLocalPos) to the same depth, within the distance limits for its kind of item.
         /// </summary>
         /// <param name="step">Distance to add to the depth.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
@@ -191,7 +202,9 @@ namespace DeftHands.Runtime
             ref Vector3 actual = ref GoPointerFields.DecolLocalPos(currentItem.held);
             float depthBefore = actual.z;
             float requestedDepth = actual.z + step;
-            actual.z = ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance);
+            actual.z = currentItem.big
+                ? ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance)
+                : ClampTowardRange(actual.z, requestedDepth, MinHoldDistance, MaxHoldDistance);
             GoPointerFields.BigItemLocalPos(currentItem.held).z = actual.z;
             HoldDepthTracker.GetInstance().AddOwnMove(actual.z - depthBefore);
 

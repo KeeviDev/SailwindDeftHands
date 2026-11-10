@@ -1,5 +1,6 @@
 using BepInEx.Configuration;
 using DeftHands.Configuration;
+using DeftHands.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -16,7 +17,8 @@ namespace DeftHands.Runtime
         {
             Rotating,
             Placing,
-            ReturningToHand
+            ReturningToHand,
+            Leveling
         }
 
         private static readonly Dictionary<HintKind, string> Hints = new Dictionary<HintKind, string>();
@@ -31,8 +33,8 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Adds the hint for <paramref name="item"/> above the text in <paramref name="controlsText"/>, unless the
-        /// game's controls text is off, the item isn't held like a big item, is being rotated or draws nothing. Each
-        /// line names keys whose setting is on.
+        /// game's controls text is off or the item is being rotated or draws nothing. Each line names keys whose
+        /// setting is on.
         /// </summary>
         public static void AddTo(TextMesh controlsText, PickupableItem item)
         {
@@ -55,11 +57,20 @@ namespace DeftHands.Runtime
                 || HeldItemVisibility.IsHidden(item))
                 return false;
 
-            return ExtendedHold.IsHeldLikeBig(item);
+            return ExtendedHold.IsHeldLikeBig(item) || IsTiltedQuadrant(item);
+        }
+
+        private static bool IsTiltedQuadrant(PickupableItem item)
+        {
+            return item is ShipItemQuadrant
+                && !Mathf.Approximately(item.heldRotationOffset, PickupableItemUtils.GetPrefabHeldRotationOffset(item));
         }
 
         private static HintKind GetKind(PickupableItem item)
         {
+            if (!ExtendedHold.IsHeldLikeBig(item))
+                return HintKind.Leveling;
+
             if (WallPlacement.LocksRotationAxis(item))
                 return HintKind.Placing;
 
@@ -83,6 +94,8 @@ namespace DeftHands.Runtime
         private static string Build(HintKind kind)
         {
             KeyCode modifierKey = ModConfig.RotationModifierKey.Value.MainKey;
+            if (kind == HintKind.Leveling)
+                return BuildResetLine(modifierKey, "level");
 
             if (modifierKey == KeyCode.None)
                 return "";

@@ -29,6 +29,7 @@
 - "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only the held item, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
 - Turning the held item on the alternative axis now goes the other way by default
 - Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
+- The quadrant no longer snaps to zero near level; while it is tilted in your hand, the controls hint shows the key that levels it
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 
 ### Fixed

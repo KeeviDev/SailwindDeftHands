@@ -11,12 +11,7 @@ namespace DeftHands.Runtime
     public class RotationHandler : MonoBehaviour
     {
         /// <summary>
-        /// Quadrant offsets within this many degrees of zero snap to exactly zero.
-        /// </summary>
-        private const float QuadrantZeroDeadzoneDegrees = 2f;
-
-        /// <summary>
-        /// Rotation speed of single-axis rotations (small items, quadrant, wall-attachment roll)
+        /// Rotation speed of single-axis rotations (small items, wall-attachment roll)
         /// relative to big items.
         /// </summary>
         private const float SingleAxisSpeedMultiplier = 2f;
@@ -42,17 +37,6 @@ namespace DeftHands.Runtime
         private bool waitsForModifierRelease;
 
         private readonly RotationInertia inertia = new RotationInertia();
-
-        /// <summary>
-        /// The quadrant's accumulated rotation before the zero-position deadzone is applied.
-        /// </summary>
-        private float quadrantRawOffset;
-
-        /// <summary>
-        /// The last value written to the quadrant's heldRotationOffset, used to detect when
-        /// other code changed it.
-        /// </summary>
-        private float lastAppliedQuadrantOffset;
 
         /// <summary>
         /// Gets whether the player is currently mouse-rotating the held item, with Mouse Rotation Control on or a
@@ -88,10 +72,6 @@ namespace DeftHands.Runtime
         {
             currentItem = item;
             inertia.Reset();
-
-            float offset = item != null ? item.heldRotationOffset : 0f;
-            quadrantRawOffset = offset;
-            lastAppliedQuadrantOffset = offset;
         }
 
         private void Update()
@@ -154,10 +134,7 @@ namespace DeftHands.Runtime
             else
             {
                 ExtendedHold.GetInstance().ReturnToHand(currentItem);
-                float offset = PickupableItemUtils.GetRestingHeldRotationOffset(currentItem);
-                currentItem.heldRotationOffset = offset;
-                quadrantRawOffset = offset;
-                lastAppliedQuadrantOffset = offset;
+                currentItem.heldRotationOffset = PickupableItemUtils.GetRestingHeldRotationOffset(currentItem);
             }
         }
 
@@ -194,8 +171,6 @@ namespace DeftHands.Runtime
             if (ExtendedHold.IsHeldLikeBig(currentItem))
                 BigItemRotation.Rotate(
                     currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, turnsInsteadOfRolling);
-            else if (currentItem is ShipItemQuadrant)
-                RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
                 currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
         }
@@ -220,31 +195,6 @@ namespace DeftHands.Runtime
             WallAttachmentRoll.RollBigItem(item, item.forward, roll * sensitivity);
             WallAttachmentRoll.HoldBigItemUpright(item);
             BigItemRotation.StoreRotation(currentItem);
-        }
-
-        /// <summary>
-        /// Rotates the quadrant around its single axis, snapping to zero within
-        /// <see cref="QuadrantZeroDeadzoneDegrees"/> of it, and picks up changes other code made to
-        /// its offset in the meantime.
-        /// </summary>
-        /// <param name="angle">Rotation to add, in degrees.</param>
-        private void RotateQuadrant(float angle)
-        {
-            if (!Mathf.Approximately(currentItem.heldRotationOffset, lastAppliedQuadrantOffset))
-                quadrantRawOffset = currentItem.heldRotationOffset;
-
-            quadrantRawOffset += angle;
-            lastAppliedQuadrantOffset = ApplyDeadzone(quadrantRawOffset, QuadrantZeroDeadzoneDegrees);
-            currentItem.heldRotationOffset = lastAppliedQuadrantOffset;
-        }
-
-        /// <summary>
-        /// Returns 0 when <paramref name="raw"/> is within <paramref name="zone"/> of it;
-        /// otherwise returns <paramref name="raw"/> unchanged.
-        /// </summary>
-        private static float ApplyDeadzone(float raw, float zone)
-        {
-            return Mathf.Abs(raw) <= zone ? 0f : raw;
         }
     }
 }

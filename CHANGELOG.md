@@ -27,6 +27,7 @@
 - The axis swap key and the "Alternative rotation axis" option now affect only big items; hooks, maps and other small wall-attachable items always roll with left/right mouse movement
 - Turning big items on the alternative axis now goes the other way by default
 - Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
+- The quadrant no longer snaps to zero near level; while it is tilted in your hand, the controls hint shows the key that levels it
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 
 ### Fixed

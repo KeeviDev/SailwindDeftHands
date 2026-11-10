@@ -1,5 +1,6 @@
 using BepInEx.Configuration;
 using DeftHands.Configuration;
+using DeftHands.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -10,7 +11,8 @@ namespace DeftHands.Runtime
     /// Shows the controls hint next to a carried big item or a small item held like one, added to the game's controls
     /// text for the held item. A big item gets the rotation modifier key, the key combination that swaps to the other
     /// axis and the scroll wheel's push and pull; while <see cref="WallPlacement.LocksRotationAxis"/>, the modifier key
-    /// only rolls it. A small item gets the rotation keys on one line and the key that puts it back into the hand.
+    /// only rolls it. A small item gets the rotation keys on one line and the key that puts it back into the hand. A
+    /// tilted quadrant held as usual gets only the key that levels it.
     /// </summary>
     internal static class RotationControlsHint
     {
@@ -18,7 +20,8 @@ namespace DeftHands.Runtime
         {
             Rotating,
             Placing,
-            ReturningToHand
+            ReturningToHand,
+            Leveling
         }
 
         private static readonly Dictionary<HintKind, string> Hints = new Dictionary<HintKind, string>();
@@ -33,8 +36,8 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Adds the hint for <paramref name="item"/> above the text in <paramref name="controlsText"/>, unless the
-        /// game's controls text is off, the item isn't held like a big item, is being rotated or draws nothing, or
-        /// mouse rotation is off.
+        /// game's controls text is off or the item is being rotated or draws nothing, and for an item held like a big
+        /// item, unless mouse rotation is off.
         /// </summary>
         public static void AddTo(TextMesh controlsText, PickupableItem item)
         {
@@ -57,11 +60,20 @@ namespace DeftHands.Runtime
                 || HeldItemVisibility.IsHidden(item))
                 return false;
 
-            return ExtendedHold.IsHeldLikeBig(item) && ModConfig.MouseRotationEnabled.Value;
+            return ExtendedHold.IsHeldLikeBig(item) ? ModConfig.MouseRotationEnabled.Value : IsTiltedQuadrant(item);
+        }
+
+        private static bool IsTiltedQuadrant(PickupableItem item)
+        {
+            return item is ShipItemQuadrant
+                && !Mathf.Approximately(item.heldRotationOffset, PickupableItemUtils.GetPrefabHeldRotationOffset(item));
         }
 
         private static HintKind GetKind(PickupableItem item)
         {
+            if (!ExtendedHold.IsHeldLikeBig(item))
+                return HintKind.Leveling;
+
             if (WallPlacement.LocksRotationAxis(item))
                 return HintKind.Placing;
 
@@ -85,6 +97,8 @@ namespace DeftHands.Runtime
         private static string Build(HintKind kind)
         {
             KeyCode modifierKey = ModConfig.RotationModifierKey.Value.MainKey;
+            if (kind == HintKind.Leveling)
+                return BuildResetLine(modifierKey, "level");
 
             if (modifierKey == KeyCode.None)
                 return "";

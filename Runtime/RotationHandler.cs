@@ -12,11 +12,6 @@ namespace DeftHands.Runtime
     public class RotationHandler : MonoBehaviour
     {
         /// <summary>
-        /// Quadrant offsets within this many degrees of zero snap to exactly zero.
-        /// </summary>
-        private const float QuadrantZeroDeadzoneDegrees = 2f;
-
-        /// <summary>
         /// Maps ShipItem.mass to a 0..1 heaviness factor: no effect at or below
         /// <see cref="WeightEffectThreshold"/>, full effect at or above
         /// <see cref="WeightEffectCap"/>, with <see cref="WeightCurvePower"/> shaping the ramp.
@@ -29,7 +24,7 @@ namespace DeftHands.Runtime
         private const float LightSmoothTime = 0.1f;
 
         /// <summary>
-        /// Rotation speed of single-axis rotations (small items, quadrant, wall-attachment roll)
+        /// Rotation speed of single-axis rotations (small items, wall-attachment roll)
         /// relative to big items.
         /// </summary>
         private const float SingleAxisSpeedMultiplier = 2f;
@@ -61,17 +56,6 @@ namespace DeftHands.Runtime
         /// <summary>Mathf.SmoothDamp's own internal velocity state for smoothedX/Y.</summary>
         private float dampVelocityX;
         private float dampVelocityY;
-
-        /// <summary>
-        /// The quadrant's accumulated rotation before the zero-position deadzone is applied.
-        /// </summary>
-        private float quadrantRawOffset;
-
-        /// <summary>
-        /// The last value written to the quadrant's heldRotationOffset, used to detect when
-        /// other code changed it.
-        /// </summary>
-        private float lastAppliedQuadrantOffset;
 
         /// <summary>
         /// Gets whether the player is currently mouse-rotating the held item; never true for items with their own
@@ -107,10 +91,6 @@ namespace DeftHands.Runtime
         {
             currentItem = item;
             ResetWeightState();
-
-            float offset = item != null ? item.heldRotationOffset : 0f;
-            quadrantRawOffset = offset;
-            lastAppliedQuadrantOffset = offset;
         }
 
         private void Update()
@@ -163,10 +143,7 @@ namespace DeftHands.Runtime
             else
             {
                 ExtendedHold.GetInstance().ReturnToHand(currentItem);
-                float offset = PickupableItemUtils.GetPrefabHeldRotationOffset(currentItem);
-                currentItem.heldRotationOffset = offset;
-                quadrantRawOffset = offset;
-                lastAppliedQuadrantOffset = offset;
+                currentItem.heldRotationOffset = PickupableItemUtils.GetPrefabHeldRotationOffset(currentItem);
             }
         }
 
@@ -255,8 +232,6 @@ namespace DeftHands.Runtime
 
             if (ExtendedHold.IsHeldLikeBig(currentItem))
                 RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, useAlternativeAxis);
-            else if (currentItem is ShipItemQuadrant)
-                RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
                 currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
         }
@@ -392,31 +367,6 @@ namespace DeftHands.Runtime
             Quaternion holderRotation = item.held.transform.rotation;
             GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holderRotation) * item.transform.rotation;
             item.heldRotationOffset = 0f;
-        }
-
-        /// <summary>
-        /// Rotates the quadrant around its single axis, snapping to zero within
-        /// <see cref="QuadrantZeroDeadzoneDegrees"/> of it, and picks up changes other code made to
-        /// its offset in the meantime.
-        /// </summary>
-        /// <param name="angle">Rotation to add, in degrees.</param>
-        private void RotateQuadrant(float angle)
-        {
-            if (!Mathf.Approximately(currentItem.heldRotationOffset, lastAppliedQuadrantOffset))
-                quadrantRawOffset = currentItem.heldRotationOffset;
-
-            quadrantRawOffset += angle;
-            lastAppliedQuadrantOffset = ApplyDeadzone(quadrantRawOffset, QuadrantZeroDeadzoneDegrees);
-            currentItem.heldRotationOffset = lastAppliedQuadrantOffset;
-        }
-
-        /// <summary>
-        /// Returns 0 when <paramref name="raw"/> is within <paramref name="zone"/> of it;
-        /// otherwise returns <paramref name="raw"/> unchanged.
-        /// </summary>
-        private static float ApplyDeadzone(float raw, float zone)
-        {
-            return Mathf.Abs(raw) <= zone ? 0f : raw;
         }
     }
 }

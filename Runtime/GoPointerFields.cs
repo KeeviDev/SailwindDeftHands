@@ -22,6 +22,12 @@ namespace DeftHands.Runtime
         public static readonly AccessTools.FieldRef<GoPointer, Quaternion> BigItemLocalRot =
             ReflectionUtils.FindFieldRef<GoPointer, Quaternion>("bigItemLocalRot");
 
+        /// <summary>
+        /// How far the holder has eased a newly picked up small item into the hand, from 0 to 1 and beyond.
+        /// </summary>
+        public static readonly AccessTools.FieldRef<GoPointer, float> TimerAfterPickup =
+            ReflectionUtils.FindFieldRef<GoPointer, float>("timerAfterPickup");
+
         /// <summary>The button or item the holder points at, or null if it points at none.</summary>
         public static readonly AccessTools.FieldRef<GoPointer, GoPointerButton> PointedAtButton =
             ReflectionUtils.FindFieldRef<GoPointer, GoPointerButton>("pointedAtButton");

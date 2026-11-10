@@ -118,7 +118,10 @@
     <Compile Include="Runtime\BigItemRotation.cs" />
     <Compile Include="Runtime\GameRotation.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
+    <Compile Include="Runtime\PutDownMemory.cs" />
     <Compile Include="Runtime\HoldDepth.cs" />
+    <Compile Include="Runtime\ExtendedHold.cs" />
+    <Compile Include="Runtime\HeldItemVisibility.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
     <Compile Include="Runtime\HeldItemAside.cs" />
     <Compile Include="Runtime\ItemBoxRiders.cs" />
@@ -133,6 +136,7 @@
     <Compile Include="Patches\BigItemFacingPatch.cs" />
     <Compile Include="Runtime\RotationControlsHint.cs" />
     <Compile Include="Patches\RotationControlsHintPatch.cs" />
+    <Compile Include="Patches\ModifierPickupClickPatch.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />
@@ -141,6 +145,7 @@
     <Compile Include="Patches\WallAttachmentPatches.cs" />
     <Compile Include="Patches\WallAttachmentAimPatch.cs" />
     <Compile Include="Patches\ItemBoxPatch.cs" />
+    <Compile Include="Patches\HeldLikeBigPatch.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\KeeviFixesCompat.cs" />

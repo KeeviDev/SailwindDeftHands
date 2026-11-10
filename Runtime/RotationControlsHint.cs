@@ -1,69 +1,106 @@
 using BepInEx.Configuration;
 using DeftHands.Configuration;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Shows the controls hint next to a carried big item: the rotation modifier key, the key combination that
-    /// swaps to the other axis and the scroll wheel's push and pull, added to the game's controls text for the held
-    /// item. While <see cref="WallPlacement.LocksRotationAxis"/>, the modifier key only rolls the item.
+    /// Adds the keys that rotate, push, pull and reset the held item to the game's controls text, for the way the item
+    /// is held.
     /// </summary>
     internal static class RotationControlsHint
     {
-        private static string hint;
+        private enum HintKind
+        {
+            Rotating,
+            Placing,
+            ReturningToHand
+        }
 
-        private static string placingHint;
+        private static readonly Dictionary<HintKind, string> Hints = new Dictionary<HintKind, string>();
 
         /// <summary>
         /// Rebuilds the hint after any setting in <paramref name="config"/> changes.
         /// </summary>
         public static void WatchSettings(ConfigFile config)
         {
-            config.SettingChanged += (sender, args) =>
-            {
-                hint = null;
-                placingHint = null;
-            };
+            config.SettingChanged += (sender, args) => Hints.Clear();
         }
 
         /// <summary>
-        /// Adds the hint for <paramref name="item"/> after the text in <paramref name="controlsText"/>, unless the
-        /// game's controls text is off, the item isn't big or the item is being rotated. Each line names keys whose
-        /// setting is on.
+        /// Adds the hint for <paramref name="item"/> above the text in <paramref name="controlsText"/>, unless the
+        /// game's controls text is off, the item isn't held like a big item, is being rotated or draws nothing. Each
+        /// line names keys whose setting is on.
         /// </summary>
         public static void AddTo(TextMesh controlsText, PickupableItem item)
         {
             if (controlsText == null || !ShowsHintFor(item))
                 return;
 
-            string itemHint = WallPlacement.LocksRotationAxis(item)
-                ? placingHint ?? (placingHint = Build(true))
-                : hint ?? (hint = Build(false));
+            string itemHint = GetHint(GetKind(item));
             if (itemHint.Length == 0)
                 return;
 
             string text = controlsText.text;
-            controlsText.text = text.Length == 0 ? itemHint : text + "\n" + itemHint;
+            controlsText.text = text.Length == 0 ? itemHint : itemHint + "\n" + text;
         }
 
         private static bool ShowsHintFor(PickupableItem item)
         {
-            return Settings.controlsTextEnabled
-                && item != null
-                && item.big
-                && !RotationHandler.GetInstance().IsRotating;
+            if (!Settings.controlsTextEnabled
+                || item == null
+                || RotationHandler.GetInstance().IsRotating
+                || HeldItemVisibility.IsHidden(item))
+                return false;
+
+            return ExtendedHold.IsHeldLikeBig(item);
         }
 
-        private static string Build(bool placing)
+        private static HintKind GetKind(PickupableItem item)
+        {
+            if (WallPlacement.LocksRotationAxis(item))
+                return HintKind.Placing;
+
+            if (item.big)
+                return HintKind.Rotating;
+
+            return HintKind.ReturningToHand;
+        }
+
+        private static string GetHint(HintKind kind)
+        {
+            if (!Hints.TryGetValue(kind, out string hint))
+            {
+                hint = Build(kind);
+                Hints[kind] = hint;
+            }
+
+            return hint;
+        }
+
+        private static string Build(HintKind kind)
         {
             KeyCode modifierKey = ModConfig.RotationModifierKey.Value.MainKey;
+
             if (modifierKey == KeyCode.None)
                 return "";
 
+            if (kind == HintKind.Rotating || kind == HintKind.Placing)
+                return BuildBigItemHint(kind, modifierKey);
+
+            return JoinLines(new List<string>
+            {
+                BuildRotationLine(modifierKey),
+                BuildResetLine(modifierKey, "back to hand")
+            });
+        }
+
+        private static string BuildBigItemHint(HintKind kind, KeyCode modifierKey)
+        {
             var lines = new List<string>();
-            if (placing)
+            if (kind == HintKind.Placing)
                 lines.Add(NameOf(modifierKey) + " roll");
             else if (ModConfig.MouseRotationEnabled.Value)
                 lines.Add(BuildRotationLines(modifierKey));
@@ -74,7 +111,23 @@ namespace DeftHands.Runtime
                 lines.Add(scroll + " push / pull");
             }
 
-            return string.Join("\n", lines);
+            return JoinLines(lines);
+        }
+
+        /// <summary>
+        /// Returns one line naming the keys that rotate a small item held like a big item: the rotation modifier key,
+        /// and the axis swap key in brackets when one is set.
+        /// </summary>
+        private static string BuildRotationLine(KeyCode modifierKey)
+        {
+            KeyCode swapKey = ModConfig.AxisSwapKey.Value.MainKey;
+            string swap = swapKey == KeyCode.None ? "" : " (+" + NameOf(swapKey) + ")";
+            return NameOf(modifierKey) + swap + " rotate";
+        }
+
+        private static string JoinLines(List<string> lines)
+        {
+            return string.Join("\n", lines.Where(line => line.Length > 0));
         }
 
         private static string BuildRotationLines(KeyCode modifierKey)
@@ -90,6 +143,20 @@ namespace DeftHands.Runtime
                     + (locksTiltWithoutSwap ? "rotate" : SideAxisName(!switchesTurnAndRoll));
 
             return text;
+        }
+
+        /// <summary>
+        /// Returns a line naming the keys that reset the held item's orientation and <paramref name="action"/>, or an
+        /// empty string when those keys can't be pressed.
+        /// </summary>
+        private static string BuildResetLine(KeyCode modifierKey, string action)
+        {
+            KeyCode resetKey = ModConfig.ResetOrientationKey.Value.MainKey;
+            bool needsModifierKey = ModConfig.ResetOrientationWithModifierKey.Value;
+            if (resetKey == KeyCode.None || (needsModifierKey && modifierKey == KeyCode.None))
+                return "";
+
+            return (needsModifierKey ? NameOf(modifierKey) + " + " : "") + NameOf(resetKey) + " " + action;
         }
 
         private static string SideAxisName(bool turns)

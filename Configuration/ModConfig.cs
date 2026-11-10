@@ -19,6 +19,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
         public static ConfigEntry<PushPullMode> PreferredPushPullControl { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
+        public static ConfigEntry<bool> ExtendedSmallItemsRotation { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
@@ -43,8 +44,8 @@ namespace DeftHands.Configuration
         public static bool PushPullEnabled => PreferredPushPullControl.Value != PushPullMode.Off;
 
         /// <summary>
-        /// Binds every setting to <paramref name="config"/>, section by section in the order Configuration Manager shows
-        /// the sections.
+        /// Binds every setting to <paramref name="config"/>, section by section in the order Configuration Manager
+        /// shows the sections, and keeps Extended Small Items Rotation off while Mouse Rotation Control is off.
         /// </summary>
         public static void Bind(ConfigFile config)
         {
@@ -55,6 +56,28 @@ namespace DeftHands.Configuration
             BindKeys(config);
             BindAxisInversion(config);
             BindWeightSimulation(config);
+            TieExtendedRotationToMouseRotation();
+        }
+
+        /// <summary>
+        /// Turns Extended Small Items Rotation off now and whenever Mouse Rotation Control is turned off, and turns
+        /// Mouse Rotation Control on whenever Extended Small Items Rotation is turned on.
+        /// </summary>
+        private static void TieExtendedRotationToMouseRotation()
+        {
+            TurnExtendedRotationOffWithoutMouseRotation();
+            MouseRotationEnabled.SettingChanged += (sender, args) => TurnExtendedRotationOffWithoutMouseRotation();
+            ExtendedSmallItemsRotation.SettingChanged += (sender, args) =>
+            {
+                if (ExtendedSmallItemsRotation.Value)
+                    MouseRotationEnabled.Value = true;
+            };
+        }
+
+        private static void TurnExtendedRotationOffWithoutMouseRotation()
+        {
+            if (!MouseRotationEnabled.Value)
+                ExtendedSmallItemsRotation.Value = false;
         }
 
         private static void BindGeneralFeatures(ConfigFile config)
@@ -82,6 +105,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "This checkbox allows you to disable the game's original scroll-wheel rotation (plain scroll, " +
                     "plus the Q axis) and NANDTweaks' third axis, to rotate items with the mouse-drag method only."));
+
+            ExtendedSmallItemsRotation = config.Bind(
+                GeneralFeaturesSection,
+                "Extended small items rotation",
+                true,
+                new ConfigDescription(
+                    "Turn, push or pull a small item to switch it to the extended state, where it gets full freedom " +
+                    "of movement, like big items. Needs \"Mouse rotation control\" turned on."));
         }
 
         private static void BindWallAttachmentFeatures(ConfigFile config)

@@ -45,9 +45,15 @@ namespace DeftHands.Patches
     [HarmonyPatch(typeof(GoPointer), "AltButtonDown")]
     public static class AltButtonDownPatch
     {
-        public static void Postfix(ref bool __result)
+        /// <summary>
+        /// Filters the press through <see cref="AltInteractionBlocker"/> and eases the held item back into the hand from
+        /// <see cref="ExtendedHold"/> when the press uses it.
+        /// </summary>
+        public static void Postfix(GoPointer __instance, ref bool __result)
         {
             __result = AltInteractionBlocker.FilterDown(__result);
+            if (__result)
+                ExtendedHold.GetInstance().ReturnToHand(__instance.GetHeldItem());
         }
     }
 

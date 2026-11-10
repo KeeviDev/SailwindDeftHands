@@ -2,8 +2,11 @@
 
 ### Added
 
-- **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look (can be turned off with the new "Easy wall hanging" option)
-- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item
+- **Extended small items rotation:** turn, push or pull a small item to switch it to the extended state, where it gets full freedom of movement, like big items; it goes back into your hand after a few seconds without turning or moving it, when you use it or press the reset key (can be turned off with the new "Extended small items rotation" option, *needs "Mouse rotation control" enabled*)
+- **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look ("Easy wall hanging")
+- **New Alt + LMB/F key combination:** hold the modifier key while picking up an item to keep its pose
+  - The ability to pick up small items like big ones: right where they lie, keeping their rotation
+- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item; a small item returns to its vanilla state in your hand
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - Controls hints for the mod's features
 - "Item Rotation" config section:
@@ -23,8 +26,8 @@
 - "Mouse rotation control" now affects only items in your hand: items you hang on walls turn with their own options
 - "Legacy rotation control" turned off now blocks the game's own rotation only where mouse rotation is enabled and available, so with "Mouse rotation control" off the game's rotation stays under your control
 - "Push/pull on scroll wheel" is now "Preferred push/pull control" with "Off", "Scroll" and "Scroll With Modifier Key Only" options; "Scroll" also needs the modifier key while mouse rotation is off and legacy rotation is on, so plain scroll is available for vanilla rotation
-- "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only big items, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
-- Turning big items on the alternative axis now goes the other way by default
+- "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only the held item, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
+- Turning the held item on the alternative axis now goes the other way by default
 - Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
 

@@ -4,8 +4,9 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Keeps a held big item facing the same way in <see cref="RotationFrame"/> while the player looks up or down,
-    /// when Horizontal Stabilization is on, and while the player turns around, when Heading Stabilization is on. A rotation other code gives the item in the hand becomes its new facing.
+    /// Keeps a held big item, or a small item held like one, facing the same way in <see cref="RotationFrame"/> while
+    /// the player looks up or down, when Horizontal Stabilization is on, and while the player turns around, when
+    /// Heading Stabilization is on. A rotation other code gives the item in the hand becomes its new facing.
     /// </summary>
     internal static class BigItemFacing
     {
@@ -30,7 +31,8 @@ namespace DeftHands.Runtime
         public static void KeepFacing(GoPointer holder)
         {
             PickupableItem heldItem = holder.GetHeldItem();
-            if (GoPointerFields.BigItemLocalRot == null || !IsEnabled() || heldItem == null || !heldItem.big)
+            if (GoPointerFields.BigItemLocalRot == null || !IsEnabled() || heldItem == null
+                || !ExtendedHold.IsHeldLikeBig(heldItem))
             {
                 facingItem = null;
                 return;

@@ -4,8 +4,9 @@ using HarmonyLib;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Keeps <see cref="RotationHandler"/>, <see cref="PushPullHandler"/>, <see cref="WallAttachmentRoll"/> and
-    /// <see cref="HeldItemAside"/>'s held item in sync with GoPointer's own pickup/drop lifecycle.
+    /// Keeps <see cref="RotationHandler"/>, <see cref="PushPullHandler"/>, <see cref="WallAttachmentRoll"/>,
+    /// <see cref="HeldItemAside"/>, <see cref="HeldItemVisibility"/> and <see cref="ExtendedHold"/>'s held item in sync
+    /// with GoPointer's own pickup/drop lifecycle.
     /// </summary>
     internal static class HeldItemTracker
     {
@@ -17,6 +18,9 @@ namespace DeftHands.Patches
             PushPullHandler.GetInstance().SetCurrentItem(item);
             WallAttachmentRoll.SetCurrentItem(item, wasAttached);
             HeldItemAside.GetInstance().SetCurrentItem(item);
+            HeldItemVisibility.SetCurrentItem(item);
+            ExtendedHold.GetInstance().SetCurrentItem(item);
+            ModifierPickupClickPatch.SetCurrentItem(item);
         }
     }
 

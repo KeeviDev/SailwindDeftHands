@@ -1,3 +1,4 @@
+using DeftHands.Runtime;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
@@ -7,7 +8,8 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Lets GoPointer.LateUpdate turn or scroll the held item with the scroll wheel only where
-    /// <see cref="HeldItemScroll.LetsHolderReadScroll"/> allows it.
+    /// <see cref="HeldItemScroll.LetsHolderReadScroll"/> allows it, and notes each scroll it reads as use of the item
+    /// for <see cref="ExtendedHold"/>.
     /// </summary>
     [HarmonyPatch(typeof(GoPointer), "LateUpdate")]
     public static class HolderScrollPatch
@@ -49,7 +51,14 @@ namespace DeftHands.Patches
 
         private static float MaskScrollValue(float input)
         {
-            return HeldItemScroll.LetsHolderReadScroll(heldItem) ? input : 0f;
+            if (input == 0f)
+                return input;
+
+            if (!HeldItemScroll.LetsHolderReadScroll(heldItem))
+                return 0f;
+
+            ExtendedHold.GetInstance().NoteActivity(heldItem);
+            return input;
         }
     }
 }

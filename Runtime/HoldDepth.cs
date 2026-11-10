@@ -9,14 +9,14 @@ namespace DeftHands.Runtime
     internal static class HoldDepth
     {
         /// <summary>
-        /// Returns how far in front of its holder the held <paramref name="item"/> is kept: for a big item, the depth of
-        /// the point it turns around in the hand, and its hold distance otherwise.
+        /// Returns how far in front of its holder the held <paramref name="item"/> is kept: for an item held like a big
+        /// item, the depth of the point it turns around in the hand, and its hold distance otherwise.
         /// </summary>
         public static float Of(PickupableItem item)
         {
             GoPointer holder = item.held;
             if (holder == null
-                || !item.big
+                || !ExtendedHold.IsHeldLikeBig(item)
                 || GoPointerFields.BigItemLocalPos == null
                 || GoPointerFields.BigItemLocalRot == null)
                 return item.holdDistance;

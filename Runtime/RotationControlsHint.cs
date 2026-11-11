@@ -18,6 +18,7 @@ namespace DeftHands.Runtime
             Rotating,
             Placing,
             ReturningToHand,
+            CourseLocked,
             Leveling,
             OnSurface,
             TurnedOnSurface
@@ -48,14 +49,16 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Adds the hint for the held <paramref name="item"/> placed on a surface for items above the text in
-        /// <paramref name="controlsText"/>, unless the game's controls text is off, or the item is being rotated.
+        /// <paramref name="controlsText"/>, unless the game's controls text is off, or the item is being rotated or is
+        /// a compass locked to the course.
         /// </summary>
         public static void AddOnSurfaceTo(TextMesh controlsText, PickupableItem item)
         {
             if (controlsText == null
                 || !Settings.controlsTextEnabled
                 || !FurniturePlacement.IsPlacing(item)
-                || RotationHandler.GetInstance().IsRotating)
+                || RotationHandler.GetInstance().IsRotating
+                || CompassAlignment.IsLockedToCourse(item))
                 return;
 
             HintKind kind = FurniturePlacement.GetInstance().IsTurned ? HintKind.TurnedOnSurface : HintKind.OnSurface;
@@ -99,7 +102,7 @@ namespace DeftHands.Runtime
             if (item.big)
                 return HintKind.Rotating;
 
-            return HintKind.ReturningToHand;
+            return CompassAlignment.IsLockedToCourse(item) ? HintKind.CourseLocked : HintKind.ReturningToHand;
         }
 
         private static string GetHint(HintKind kind)
@@ -125,7 +128,10 @@ namespace DeftHands.Runtime
             if (kind == HintKind.Rotating || kind == HintKind.Placing)
                 return BuildBigItemHint(kind, modifierKey);
 
-            var lines = new List<string> { BuildRotationLine(modifierKey) };
+            var lines = new List<string>();
+            if (kind != HintKind.CourseLocked)
+                lines.Add(BuildRotationLine(modifierKey));
+
             if (kind == HintKind.TurnedOnSurface)
                 lines.Add(BuildResetLine(modifierKey, "reset"));
             else if (kind != HintKind.OnSurface)

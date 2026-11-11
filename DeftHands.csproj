@@ -122,12 +122,15 @@
     <Compile Include="Runtime\HoldDepth.cs" />
     <Compile Include="Runtime\ExtendedHold.cs" />
     <Compile Include="Runtime\HeldItemVisibility.cs" />
+    <Compile Include="Runtime\CompassAlignment.cs" />
+    <Compile Include="Runtime\CompassCourseHint.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
     <Compile Include="Runtime\HeldItemAside.cs" />
     <Compile Include="Runtime\ItemBoxRiders.cs" />
     <Compile Include="Runtime\ItemParts.cs" />
     <Compile Include="Runtime\WallAttachmentAim.cs" />
     <Compile Include="Runtime\WallPlacement.cs" />
+    <Compile Include="Runtime\CompassCourseKeeper.cs" />
     <Compile Include="Runtime\FurniturePlacement.cs" />
     <Compile Include="Runtime\ItemShape.cs" />
     <Compile Include="Runtime\SurfaceAim.cs" />
@@ -140,7 +143,7 @@
     <Compile Include="Runtime\BigItemFacing.cs" />
     <Compile Include="Patches\BigItemFacingPatch.cs" />
     <Compile Include="Runtime\RotationControlsHint.cs" />
-    <Compile Include="Patches\RotationControlsHintPatch.cs" />
+    <Compile Include="Patches\ControlsTextPatches.cs" />
     <Compile Include="Patches\ModifierPickupClickPatch.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />

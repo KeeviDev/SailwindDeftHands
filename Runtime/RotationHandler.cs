@@ -44,12 +44,13 @@ namespace DeftHands.Runtime
         /// <summary>
         /// Gets whether the player is currently mouse-rotating the held item where <see cref="TakesMouseRotation"/>;
         /// never true for items with their own OnScroll behaviour that can't be held like a big item, unless placed on
-        /// a surface for items.
+        /// a surface for items, or for a compass locked to the course.
         /// </summary>
         public bool IsRotating =>
             ModInput.IsRotationModifierKeyHeld()
             && IsHoldingRotatableItem
-            && TakesMouseRotation(currentItem);
+            && TakesMouseRotation(currentItem)
+            && !CompassAlignment.IsLockedToCourse(currentItem);
 
         private bool IsHoldingRotatableItem =>
             currentItem != null
@@ -93,7 +94,8 @@ namespace DeftHands.Runtime
 
         private void Update()
         {
-            if (ModInput.IsResetOrientationPressed() && IsHoldingRotatableItem)
+            if (ModInput.IsResetOrientationPressed()
+                && (IsHoldingRotatableItem || CompassAlignment.IsLockedToCourse(currentItem)))
                 ResetHeldItemOrientation();
 
             if (!IsRotating)
@@ -144,16 +146,17 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Resets the held item's orientation. An item placed on a surface for items turns back to its resting rotation
-        /// there, facing the player's heading, and stays held the way it was; in the hand, a big item stands upright in
-        /// <see cref="RotationFrame"/>, facing the player's heading, and a small item stops being held like a big item
-        /// and eases back into the usual hold, at the tilt it rests at there
-        /// (<see cref="PickupableItemUtils.GetRestingHeldRotationOffset"/>).
+        /// Resets the held item's orientation, and unlocks it from the course when it is a compass locked to it. An
+        /// item placed on a surface for items turns back to its resting rotation there, facing the player's heading,
+        /// and stays held the way it was; in the hand, a big item stands upright in <see cref="RotationFrame"/>, facing
+        /// the player's heading, and a small item stops being held like a big item and eases back into the usual hold,
+        /// at the tilt it rests at there (<see cref="PickupableItemUtils.GetRestingHeldRotationOffset"/>).
         /// </summary>
         private void ResetHeldItemOrientation()
         {
             inertia.Reset();
             waitsForModifierRelease = ModInput.IsRotationModifierKeyHeld();
+            CompassAlignment.Unlock(currentItem);
             if (FurniturePlacement.IsPlacing(currentItem))
             {
                 FurniturePlacement.GetInstance().ResetRotation();

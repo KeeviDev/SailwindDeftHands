@@ -14,6 +14,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Neat placement.** Putting items on tables, shelves and crates is reworked and more precise, and you can turn them any way with **Left Alt** and the mouse before you set them down.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
+- **Compass on course.** On a boat, **right-click** a compass lying on deck and it turns to read your course. When you hold one, **right-click** to keep it on the boat's course while you carry it or place it on a table.
 - **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
 
@@ -49,6 +50,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Legacy rotation control | On | Keeps the game's own scroll rotation alongside mouse rotation in your hand and on furniture. |
 | Extended small items rotation | On | Turn, push or pull a small item and you hold it like a big item. Needs mouse rotation, and turns it on with it. |
 | Neat item placement | On | Reworked, more precise placing of items on furniture, with extended rotation. |
+| Compass course alignment | On | Right-click a compass to align it with the boat's course. |
 | **Wall Attachment Features** | | |
 | Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |

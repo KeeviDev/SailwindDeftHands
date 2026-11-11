@@ -21,6 +21,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
         public static ConfigEntry<bool> ExtendedSmallItemsRotation { get; private set; }
         public static ConfigEntry<bool> NeatItemPlacement { get; private set; }
+        public static ConfigEntry<bool> CompassCourseAlignment { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
@@ -122,6 +123,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Turns on a reworked, more precise way to place items on tables, shelves and other furniture, " +
                     "with extended rotation."));
+
+            CompassCourseAlignment = config.Bind(
+                GeneralFeaturesSection,
+                "Compass course alignment",
+                true,
+                new ConfigDescription(
+                    "Right-click a compass you hold to keep it on the boat's course, or right-click a compass lying " +
+                    "on deck to turn it to the boat's course."));
         }
 
         private static void BindWallAttachmentFeatures(ConfigFile config)

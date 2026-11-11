@@ -74,6 +74,14 @@ namespace DeftHands.Runtime
         /// <summary>Whether the player turned or reset the item on the surface it is placed on.</summary>
         private bool isRotationChanged;
 
+        /// <summary>
+        /// Whether the item rested at the course it is locked to on the surface it was last placed on.
+        /// </summary>
+        private bool restsAtCourse;
+
+        /// <summary>Whether the item is locked to the course again on the next surface it is aimed at.</summary>
+        private bool remembersCourse;
+
         private float leftSurfaceTime;
 
         /// <summary>The rotation whose up is the surface's and whose forward is the player's heading on it.</summary>
@@ -159,6 +167,7 @@ namespace DeftHands.Runtime
             MeasureCurrentItem();
             isPlacing = false;
             remembersRotation = false;
+            remembersCourse = false;
             overlaps = false;
             placedItem = null;
             pickupRotation.OnPickup(currentItem, currentShape);
@@ -206,6 +215,7 @@ namespace DeftHands.Runtime
         public void ForgetRotation()
         {
             remembersRotation = false;
+            remembersCourse = false;
             pickupRotation.ForgetUnlessKeptInHand();
         }
 
@@ -341,7 +351,8 @@ namespace DeftHands.Runtime
                 EnterSurface(frame);
 
             surfaceFrame = frame;
-            Quaternion rotation = frame * rotationOnSurface;
+            restsAtCourse = CompassAlignment.TryGetLockedCourse(currentItem, up, out Quaternion course);
+            Quaternion rotation = restsAtCourse ? course : frame * rotationOnSurface;
             if (!currentShape.TryRestAgainst(ground, point, normal, rotation, out Vector3 position))
                 return false;
 
@@ -359,9 +370,10 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Starts placing the current item on a surface framed by <paramref name="frame"/>: at the rotation it lay at when
-        /// picked up while that is remembered and the item is held as a small item; else at its rotation on the last
-        /// surface when that was within <see cref="MemoryTime"/> seconds; or else at <see cref="GetStartingRotation"/>.
+        /// Starts placing the current item on a surface framed by <paramref name="frame"/>: at the rotation it lay at
+        /// when picked up while that is remembered and the item is held as a small item; else at its rotation on the
+        /// last surface, locked to the course again when it was locked there, when that was within
+        /// <see cref="MemoryTime"/> seconds; or else at <see cref="GetStartingRotation"/>.
         /// </summary>
         private void EnterSurface(Quaternion frame)
         {
@@ -370,20 +382,30 @@ namespace DeftHands.Runtime
                     * AttachmentSpace.ToVisibleWorld(currentItem, rotationAtPickup);
             else if (!remembersRotation || Time.time - leftSurfaceTime > MemoryTime)
                 rotationOnSurface = GetStartingRotation(frame);
+            else if (remembersCourse)
+                CompassAlignment.TryLockToCourse(currentItem);
 
+            remembersCourse = false;
             isRotationChanged = false;
             isPlacing = true;
         }
 
         /// <summary>
         /// Stops placing the current item. An item held like a big item gets the rotation the player gave it on the
-        /// surface in the hand; any other is remembered with its rotation on the surface.
+        /// surface in the hand; any other is remembered with its rotation on the surface, and with its course lock when
+        /// it rested at the course. An item that rested at the course forgets the rotation it lay at when picked up.
         /// </summary>
         private void LeaveSurface()
         {
             overlaps = false;
             if (!isPlacing)
                 return;
+
+            if (restsAtCourse)
+            {
+                rotationOnSurface = Quaternion.Inverse(surfaceFrame) * shownPose.rotation;
+                pickupRotation.Forget();
+            }
 
             QuadrantInspection.Restore(currentItem);
             isPlacing = false;
@@ -395,6 +417,7 @@ namespace DeftHands.Runtime
             }
 
             remembersRotation = true;
+            remembersCourse = restsAtCourse;
             leftSurfaceTime = Time.time;
         }
 

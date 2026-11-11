@@ -183,7 +183,8 @@ namespace DeftHands.Runtime
             }
 
             bool isActive = RotationHandler.GetInstance().IsRotating
-                || PushPullHandler.GetInstance().IsMoving;
+                || PushPullHandler.GetInstance().IsMoving
+                || CompassAlignment.IsLockedToCourse(currentItem);
             if (FurniturePlacement.IsPlacing(currentItem))
             {
                 lastActivityTime = isActive ? Time.time : lastActivityTime + Time.deltaTime;

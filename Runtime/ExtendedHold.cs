@@ -181,7 +181,9 @@ namespace DeftHands.Runtime
                 return;
             }
 
-            if (RotationHandler.GetInstance().IsRotating || PushPullHandler.GetInstance().IsMoving)
+            if (RotationHandler.GetInstance().IsRotating
+                || PushPullHandler.GetInstance().IsMoving
+                || CompassAlignment.IsLockedToCourse(currentItem))
                 NoteActivity();
 
             if (Time.time - lastActivityTime >= IdleTime)

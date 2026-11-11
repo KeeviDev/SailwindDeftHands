@@ -13,6 +13,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Small items too.** Turn, push or pull a small item and you hold it like a big one — free to turn any way and move closer or farther. Leave it be for a few seconds, use it or click the **mouse wheel**, and it settles back into your hand. To hold it like this right away, keep **Left Alt** pressed while you pick it up.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
+- **Compass on course.** On a boat, **right-click** a compass lying on deck and it turns to read your course. When you hold one with extended rotation, **right-click** to keep it on the boat's course while you place it.
 - **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
 
@@ -58,6 +59,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
 | Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
 | Extended small items rotation | On | Turn, push or pull a small item and you hold it like a big item. |
+| Compass course alignment | On | Right-click a compass to align it with the boat's course. |
 | Invert vertical | Off | Reverses which way up/down movement tilts the item. |
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |
 | Invert turn | Off | Reverses left/right turning of big items on the alternative axis. |

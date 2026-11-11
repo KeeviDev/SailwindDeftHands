@@ -11,8 +11,9 @@ namespace DeftHands.Runtime
     /// Shows the controls hint next to a carried big item or a small item held like one, added to the game's controls
     /// text for the held item. A big item gets the rotation modifier key, the key combination that swaps to the other
     /// axis and the scroll wheel's push and pull; while <see cref="WallPlacement.LocksRotationAxis"/>, the modifier key
-    /// only rolls it. A small item gets the rotation keys on one line and the key that puts it back into the hand. A
-    /// tilted quadrant held as usual gets only the key that levels it.
+    /// only rolls it. A small item gets the rotation keys on one line and the key that puts it back into the hand; a
+    /// compass locked to the course shows no rotation keys. A tilted quadrant held as usual gets only the key that levels
+    /// it.
     /// </summary>
     internal static class RotationControlsHint
     {
@@ -21,6 +22,7 @@ namespace DeftHands.Runtime
             Rotating,
             Placing,
             ReturningToHand,
+            CourseLocked,
             Leveling
         }
 
@@ -80,7 +82,7 @@ namespace DeftHands.Runtime
             if (item.big)
                 return HintKind.Rotating;
 
-            return HintKind.ReturningToHand;
+            return CompassAlignment.IsLockedToCourse(item) ? HintKind.CourseLocked : HintKind.ReturningToHand;
         }
 
         private static string GetHint(HintKind kind)
@@ -106,11 +108,12 @@ namespace DeftHands.Runtime
             if (kind == HintKind.Rotating || kind == HintKind.Placing)
                 return BuildBigItemHint(kind, modifierKey);
 
-            return JoinLines(new List<string>
-            {
-                BuildRotationLine(modifierKey),
-                BuildResetLine(modifierKey, "back to hand")
-            });
+            var lines = new List<string>();
+            if (kind != HintKind.CourseLocked)
+                lines.Add(BuildRotationLine(modifierKey));
+
+            lines.Add(BuildResetLine(modifierKey, "back to hand"));
+            return JoinLines(lines);
         }
 
         private static string BuildBigItemHint(HintKind kind, KeyCode modifierKey)

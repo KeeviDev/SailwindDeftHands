@@ -59,12 +59,13 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Gets whether the player is currently mouse-rotating the held item; never true for items with their own
-        /// OnScroll behaviour that can't be held like a big item.
+        /// OnScroll behaviour that can't be held like a big item, or for a compass locked to the course.
         /// </summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
             && ModInput.IsRotationModifierKeyHeld()
-            && IsHoldingRotatableItem;
+            && IsHoldingRotatableItem
+            && !CompassAlignment.IsLockedToCourse(currentItem);
 
         private bool IsHoldingRotatableItem =>
             currentItem != null

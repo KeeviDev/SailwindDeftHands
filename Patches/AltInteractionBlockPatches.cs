@@ -1,5 +1,6 @@
 using DeftHands.Runtime;
 using HarmonyLib;
+using UnityEngine;
 
 namespace DeftHands.Patches
 {
@@ -45,15 +46,30 @@ namespace DeftHands.Patches
     [HarmonyPatch(typeof(GoPointer), "AltButtonDown")]
     public static class AltButtonDownPatch
     {
+        private static int lastHandledFrame = -1;
+
         /// <summary>
-        /// Filters the press through <see cref="AltInteractionBlocker"/> and eases the held item back into the hand from
-        /// <see cref="ExtendedHold"/> when the press uses it.
+        /// Filters the press through <see cref="AltInteractionBlocker"/>. A press that passes, once a frame, locks a held
+        /// compass to the course or unlocks it, or else eases the held item back into the hand from
+        /// <see cref="ExtendedHold"/>; with nothing held, it points a compass looked at along the course.
         /// </summary>
         public static void Postfix(GoPointer __instance, ref bool __result)
         {
             __result = AltInteractionBlocker.FilterDown(__result);
-            if (__result)
-                ExtendedHold.GetInstance().ReturnToHand(__instance.GetHeldItem());
+            if (!__result || Time.frameCount == lastHandledFrame)
+                return;
+
+            lastHandledFrame = Time.frameCount;
+            PickupableItem heldItem = __instance.GetHeldItem();
+            if (heldItem == null)
+            {
+                if (GoPointerFields.PointedAtButton != null)
+                    CompassAlignment.TryAlignLyingCompass(GoPointerFields.PointedAtButton(__instance));
+            }
+            else if (!CompassAlignment.TryToggleCourseLock(heldItem))
+            {
+                ExtendedHold.GetInstance().ReturnToHand(heldItem);
+            }
         }
     }
 

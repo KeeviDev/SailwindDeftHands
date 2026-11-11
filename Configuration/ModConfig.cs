@@ -32,6 +32,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> ExtendedSmallItemsRotation { get; private set; }
+        public static ConfigEntry<bool> CompassCourseAlignment { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
@@ -190,6 +191,14 @@ namespace DeftHands.Configuration
                 true,
                 new ConfigDescription(
                     "Turn, push or pull a small item and you hold it like a big item."));
+
+            CompassCourseAlignment = config.Bind(
+                HeldItemControlSection,
+                "Compass course alignment",
+                true,
+                new ConfigDescription(
+                    "On a boat, the right mouse button points a compass along the course: a compass lying on deck turns " +
+                    "in place, and a compass you hold with extended rotation stays on course until you press it again."));
 
             InvertVertical = config.Bind(
                 AxisInversionSection,

@@ -1,21 +1,18 @@
+using DeftHands.Utils;
 using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Converts between the visible world and the space the game computes surface attachment in.
-    /// On a boat, an item's physics body lives on a static copy of the boat (its walk collider),
-    /// so attachment rays, positions and rotations are in that copy's space rather than the
-    /// visible boat's.
+    /// Converts between the visible world and attachment space, the space the game computes
+    /// surface attachment in: that of the static boat copy (walk collider) an item's physics body
+    /// sits on while on a boat, and the world otherwise.
     /// </summary>
     internal static class AttachmentSpace
     {
-        private static readonly FieldInfo OnBoatField = AccessTools.Field(typeof(ItemRigidbody), "onBoat");
-
         private static readonly AccessTools.FieldRef<ItemRigidbody, bool> IsBodyOnBoat =
-            OnBoatField != null ? AccessTools.FieldRefAccess<ItemRigidbody, bool>(OnBoatField) : null;
+            ReflectionUtils.FindFieldRef<ItemRigidbody, bool>("onBoat");
 
         /// <summary>Converts a visible-world point to attachment space.</summary>
         public static Vector3 ToAttachmentSpace(ShipItem item, Vector3 point)
@@ -33,15 +30,21 @@ namespace DeftHands.Runtime
                 : rotation;
         }
 
+        /// <summary>Converts an attachment-space rotation to the visible world.</summary>
+        public static Quaternion ToVisibleWorld(ShipItem item, Quaternion rotation)
+        {
+            return IsOnBoat(item)
+                ? item.currentActualBoat.rotation * Quaternion.Inverse(item.currentWalkCol.rotation) * rotation
+                : rotation;
+        }
+
         /// <summary>
         /// Returns the visible-world direction that's up in attachment space: the boat's up on a
         /// boat, world up otherwise.
         /// </summary>
         public static Vector3 UpInWorld(ShipItem item)
         {
-            return IsOnBoat(item)
-                ? item.currentActualBoat.rotation * Quaternion.Inverse(item.currentWalkCol.rotation) * Vector3.up
-                : Vector3.up;
+            return ToVisibleWorld(item, Quaternion.identity) * Vector3.up;
         }
 
         private static bool IsOnBoat(ShipItem item)

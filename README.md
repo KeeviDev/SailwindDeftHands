@@ -8,11 +8,13 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 
 ## What you get
 
-- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it.
-- **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning.
+- **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it. Click the **mouse wheel** to set it straight again.
+- **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
+- **Small items too.** Turn, push or pull a small item and you hold it like a big one — free to turn any way and move closer or farther. Leave it be for a few seconds, use it or click the **mouse wheel**, and it settles back into your hand. To hold it like this right away, keep **Left Alt** pressed while you pick it up.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
-- **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors.
-- **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther.
+- **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
+- **Compass on course.** On a boat, **right-click** a compass lying on deck and it turns to read your course. When you hold one with extended rotation, **right-click** to keep it on the boat's course while you place it.
+- **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
 
 https://github.com/user-attachments/assets/24d5d3af-5c76-4b30-b9fd-e4f86cddca80
@@ -42,15 +44,27 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Setting | Default | What it does |
 |---|---|---|
 | Mouse rotation control | On | Rotate held items by moving the mouse. |
-| Rotation activation key | Left Alt | Hold it to rotate. |
+| Rotation modifier key | Left Alt | Hold it to rotate. |
 | Rotation sensitivity | 2 | How fast items turn (0.5–10). |
 | Alternative rotation axis | Off | Left/right turns big items around the vertical axis instead of rolling them. |
 | Axis swap key | Right mouse button | Hold while rotating to flip the axis above. |
+| Lock tilt | On axis swap | Up/down movement doesn't tilt big items while you hold the modifier key alone (Without axis swap) or with the axis swap key (On axis swap). |
+| Reset orientation key | Middle mouse button | Resets the held item's orientation. |
+| Reset orientation with modifier key | Off | The reset key works only while you hold the modifier key. |
+| Keep turning level | On | Big items turn around the vertical (the deck's on a boat), so they stay level. |
+| Keep rolling level | On | Big items roll around a level axis, even when you look up or down. |
+| Keep tilting level | On | On a boat, big items tilt around an axis level with the deck. |
+| Keep facing when looking up and down | On | Big items keep facing the same way, in the world or on deck, when you look up or down. |
+| Keep facing when turning around | Off | Big items keep facing the same way, in the world or on deck, when you turn around. |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
+| Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
+| Extended small items rotation | On | Turn, push or pull a small item and you hold it like a big item. |
+| Compass course alignment | On | Right-click a compass to align it with the boat's course. |
 | Invert vertical | Off | Reverses which way up/down movement tilts the item. |
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |
 | Invert turn | Off | Reverses left/right turning of big items on the alternative axis. |
 | Push/pull on scroll wheel | On | Scroll moves the held item closer or farther. |
+| Push/pull with modifier key | Off | Scroll pushes and pulls only while you hold the modifier key. |
 | Legacy rotation control | On | Keeps the game's original scroll rotation around. |
 | Rotation inertia | On | Heavy items take a moment to spin up and drift to a stop. |
 | Weight preset | Standard | How heavy things feel: Standard or the subtler Light. |

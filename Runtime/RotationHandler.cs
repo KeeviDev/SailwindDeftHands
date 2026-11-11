@@ -1,24 +1,16 @@
 using BepInEx.Configuration;
 using DeftHands.Configuration;
 using DeftHands.Utils;
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Rotates the held item with mouse movement while the rotation activation key is held,
+    /// Rotates the held item with mouse movement while the rotation modifier key is held,
     /// optionally smoothed to make heavier items feel weighted.
     /// </summary>
     public class RotationHandler : MonoBehaviour
     {
-        /// <summary>
-        /// Quadrant offsets within this many degrees of zero, its star-sighting calibration
-        /// point, snap to exactly zero.
-        /// </summary>
-        private const float QuadrantZeroDeadzoneDegrees = 2f;
-
         /// <summary>
         /// Maps ShipItem.mass to a 0..1 heaviness factor: no effect at or below
         /// <see cref="WeightEffectThreshold"/>, full effect at or above
@@ -32,7 +24,7 @@ namespace DeftHands.Runtime
         private const float LightSmoothTime = 0.1f;
 
         /// <summary>
-        /// Rotation speed of single-axis rotations (small items, quadrant, wall-attachment roll)
+        /// Rotation speed of single-axis rotations (small items, wall-attachment roll)
         /// relative to big items.
         /// </summary>
         private const float SingleAxisSpeedMultiplier = 2f;
@@ -40,11 +32,22 @@ namespace DeftHands.Runtime
         /// <summary>Mouse movement below this on both axes is ignored.</summary>
         private const float MinAppliedInput = 0.001f;
 
-        private static readonly FieldInfo BigItemLocalRotField = AccessTools.Field(typeof(GoPointer), "bigItemLocalRot");
+        /// <summary>Mouse movement is ignored for this many seconds after rotating starts.</summary>
+        private const float RotationStartDelay = 0.1f;
 
         private static RotationHandler instance;
 
         private PickupableItem currentItem;
+
+        private bool wasRotating;
+
+        private float rotationStartTime;
+
+        /// <summary>
+        /// Whether mouse rotation waits for the rotation modifier key to be released, after a reset made while holding
+        /// it.
+        /// </summary>
+        private bool waitsForModifierRelease;
 
         /// <summary>Weight-smoothed replacement for this frame's raw mouse delta.</summary>
         private float smoothedX;
@@ -55,23 +58,20 @@ namespace DeftHands.Runtime
         private float dampVelocityY;
 
         /// <summary>
-        /// The quadrant's accumulated rotation before the zero-position deadzone is applied, so
-        /// the deadzone doesn't lose how far into it the cursor actually is.
+        /// Gets whether the player is currently mouse-rotating the held item; never true for items with their own
+        /// OnScroll behaviour that can't be held like a big item, or for a compass locked to the course.
         /// </summary>
-        private float quadrantRawOffset;
-
-        /// <summary>
-        /// The last value written to the quadrant's heldRotationOffset, used to detect when
-        /// other code changed it.
-        /// </summary>
-        private float lastAppliedQuadrantOffset;
-
-        /// <summary>Whether the player is currently mouse-rotating a held item.</summary>
         public bool IsRotating =>
             ModConfig.MouseRotationEnabled.Value
-            && ModInput.IsRotationActivationKeyHeld()
-            && currentItem != null
-            && currentItem.held != null;
+            && ModInput.IsRotationModifierKeyHeld()
+            && IsHoldingRotatableItem
+            && !CompassAlignment.IsLockedToCourse(currentItem);
+
+        private bool IsHoldingRotatableItem =>
+            currentItem != null
+            && currentItem.held != null
+            && !HeldItemVisibility.IsHidden(currentItem)
+            && (!PickupableItemUtils.HasCustomOnScroll(currentItem) || ExtendedHold.CanHoldLikeBig(currentItem));
 
         public static RotationHandler GetInstance()
         {
@@ -92,26 +92,71 @@ namespace DeftHands.Runtime
         {
             currentItem = item;
             ResetWeightState();
-
-            float offset = item != null ? item.heldRotationOffset : 0f;
-            quadrantRawOffset = offset;
-            lastAppliedQuadrantOffset = offset;
         }
 
         private void Update()
         {
+            if (ModInput.IsResetOrientationPressed() && IsHoldingRotatableItem)
+                ResetHeldItemOrientation();
+
             if (!IsRotating)
             {
+                wasRotating = false;
+                waitsForModifierRelease = false;
                 ResetWeightState();
                 WallAttachmentRoll.RecenterDeadzone();
                 return;
             }
 
+            if (waitsForModifierRelease)
+                return;
+
+            if (!wasRotating)
+            {
+                wasRotating = true;
+                rotationStartTime = Time.unscaledTime;
+            }
+            if (Time.unscaledTime - rotationStartTime < RotationStartDelay)
+                return;
+
             Vector2 input = ReadMouseInput();
             if (Mathf.Abs(input.x) < MinAppliedInput && Mathf.Abs(input.y) < MinAppliedInput)
                 return;
 
+            ExtendedHold.GetInstance().TryHoldLikeBig(currentItem);
             RotateHeldItem(input.x, input.y);
+        }
+
+        /// <summary>
+        /// Resets the held item's orientation in the hand. A big item stands upright in <see cref="RotationFrame"/>,
+        /// facing the player's heading; a small item eases back into the usual hold, at the tilt its prefab is held at.
+        /// </summary>
+        private void ResetHeldItemOrientation()
+        {
+            ResetWeightState();
+            waitsForModifierRelease = ModInput.IsRotationModifierKeyHeld();
+            WallAttachmentRoll.ResetRoll();
+            if (currentItem.big)
+            {
+                currentItem.heldRotationOffset = 0f;
+                StandBigItemUpright(currentItem);
+            }
+            else
+            {
+                ExtendedHold.GetInstance().ReturnToHand(currentItem);
+                currentItem.heldRotationOffset = PickupableItemUtils.GetPrefabHeldRotationOffset(currentItem);
+            }
+        }
+
+        private static void StandBigItemUpright(PickupableItem item)
+        {
+            if (GoPointerFields.BigItemLocalRot == null)
+                return;
+
+            Transform holder = item.held.transform;
+            Vector3 up = RotationFrame.Up;
+            Vector3 heading = Vector3.Cross(RotationFrame.Flatten(holder.right), up);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holder.rotation) * Quaternion.LookRotation(heading, up);
         }
 
         /// <summary>
@@ -162,14 +207,17 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Applies this frame's input to the held item's rotation. Horizontal movement on the roll
-        /// axis also rolls wall-attachable small items for attaching. Leaves items with their own
-        /// OnScroll behaviour alone.
+        /// Applies this frame's input to the held item's rotation, as to a big item for an item held like one.
+        /// Horizontal movement on the roll axis also rolls wall-attachable small items for attaching. While
+        /// <see cref="WallPlacement.LocksRotationAxis"/>, only horizontal movement turns the item.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
-            if (PickupableItemUtils.HasCustomOnScroll(currentItem))
+            if (WallPlacement.LocksRotationAxis(currentItem))
+            {
+                TurnAroundSurfaceAxis(horizontalInput);
                 return;
+            }
 
             Camera mainCamera = Camera.main;
             if (mainCamera == null)
@@ -180,20 +228,41 @@ namespace DeftHands.Runtime
             float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
             bool useAlternativeAxis = IsAlternativeAxisActive();
 
-            if (WallAttachmentRoll.IsActive && !currentItem.big && !useAlternativeAxis)
+            if (WallAttachmentRoll.IsActive && !currentItem.big)
                 WallAttachmentRoll.AddRollInput(-ApplyInversion(horizontalInput, ModConfig.InvertRoll) * singleAxisSensitivity);
 
-            if (currentItem.big)
+            if (ExtendedHold.IsHeldLikeBig(currentItem))
                 RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, useAlternativeAxis);
-            else if (currentItem is ShipItemQuadrant)
-                RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
                 currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
         }
 
         /// <summary>
-        /// Whether horizontal movement currently turns items around the camera's up axis instead
-        /// of rolling them: Alternative Rotation Axis, flipped while the axis swap key is held.
+        /// Turns the held item being placed around its own axis into the surface by
+        /// <paramref name="horizontalInput"/>: a small item through its attachment roll, a big item in
+        /// the hand, pausing at upright while turning through it.
+        /// </summary>
+        private void TurnAroundSurfaceAxis(float horizontalInput)
+        {
+            float sensitivity = ModConfig.RotationSensitivity.Value;
+            float roll = -ApplyInversion(horizontalInput, ModConfig.InvertRoll);
+            if (!currentItem.big)
+            {
+                WallAttachmentRoll.AddRollInput(roll * sensitivity * SingleAxisSpeedMultiplier);
+                return;
+            }
+
+            Transform item = currentItem.transform;
+            TurnToHolderPose(currentItem);
+            WallAttachmentRoll.RollBigItem(item, item.forward, roll * sensitivity);
+            WallAttachmentRoll.HoldBigItemUpright(item);
+            StoreBigItemRotation(currentItem);
+        }
+
+        /// <summary>
+        /// Returns whether horizontal movement currently turns big items around the camera's up axis
+        /// instead of rolling them: Alternative Rotation Axis, flipped while the axis swap key is
+        /// held.
         /// </summary>
         private static bool IsAlternativeAxisActive()
         {
@@ -201,28 +270,62 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Rotates a big item freely relative to the camera. Vertical movement pitches around
-        /// the camera's right axis; horizontal movement rolls around its forward axis, or turns
-        /// around its up axis on the alternative axis. Wall-attachable items pause at upright
-        /// while rolling through it.
+        /// Returns whether vertical movement currently leaves big items at their tilt: Lock Tilt is
+        /// On Axis Swap and the axis swap key is held, or Without Axis Swap and it isn't.
+        /// </summary>
+        private static bool IsTiltLocked()
+        {
+            switch (ModConfig.LockTilt.Value)
+            {
+                case TiltLock.WithoutAxisSwap: return !ModInput.IsAxisSwapKeyHeld();
+                case TiltLock.OnAxisSwap: return ModInput.IsAxisSwapKeyHeld();
+                default: return false;
+            }
+        }
+
+        /// <summary>
+        /// Rotates a big item freely relative to the camera. Vertical movement tilts it around the
+        /// camera's right axis; horizontal movement rolls it around the camera's forward axis, or
+        /// turns it around the camera's up axis on the alternative axis. Keep Turning Level, Keep
+        /// Rolling Level and Keep Tilting Level replace these axes with level ones in
+        /// <see cref="RotationFrame"/>. Vertical movement is ignored while
+        /// <see cref="IsTiltLocked"/>.
+        /// Wall-attachable items pause at upright while rolling through it.
         /// </summary>
         /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
         /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
         private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity, bool useAlternativeAxis)
         {
             Transform camera = mainCamera.transform;
+            TurnToHolderPose(item);
 
             if (useAlternativeAxis)
-                item.transform.Rotate(camera.up, -ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
+                item.transform.Rotate(GetTurnAxis(camera), ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
             else
-                RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
+                RollBigItem(item, GetRollAxis(camera), -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
 
-            item.transform.Rotate(camera.right, tiltInput * sensitivity, Space.World);
+            if (!IsTiltLocked())
+                item.transform.Rotate(GetTiltAxis(camera), tiltInput * sensitivity, Space.World);
 
             if (WallAttachmentRoll.IsActive)
                 WallAttachmentRoll.HoldBigItemUpright(item.transform);
 
             StoreBigItemRotation(item);
+        }
+
+        private static Vector3 GetTurnAxis(Transform camera)
+        {
+            return ModConfig.KeepTurningLevel.Value ? RotationFrame.Up : camera.up;
+        }
+
+        private static Vector3 GetRollAxis(Transform camera)
+        {
+            return ModConfig.KeepRollingLevel.Value ? Vector3.Cross(RotationFrame.Flatten(camera.right), RotationFrame.Up) : camera.forward;
+        }
+
+        private static Vector3 GetTiltAxis(Transform camera)
+        {
+            return ModConfig.KeepTiltingLevel.Value ? RotationFrame.Flatten(camera.right) : camera.right;
         }
 
         private static void RollBigItem(PickupableItem item, Vector3 axis, float degrees)
@@ -239,41 +342,32 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, the
-        /// same way the game's own Q-axis rotation does, so it persists on following frames.
+        /// Sets the big item's rotation to the one its holding GoPointer gives it this frame, with
+        /// <see cref="BigItemFacing"/> applied first.
+        /// </summary>
+        private static void TurnToHolderPose(PickupableItem item)
+        {
+            if (GoPointerFields.BigItemLocalRot == null)
+                return;
+
+            BigItemFacing.KeepFacing(item.held);
+            Quaternion rotationInHand = GoPointerFields.BigItemLocalRot(item.held);
+            Quaternion offset = Quaternion.AngleAxis(item.heldRotationOffset, Vector3.right);
+            item.transform.rotation = item.held.transform.rotation * offset * rotationInHand;
+        }
+
+        /// <summary>
+        /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, so it
+        /// persists on following frames, and resets the item's heldRotationOffset.
         /// </summary>
         private static void StoreBigItemRotation(PickupableItem item)
         {
-            if (BigItemLocalRotField == null)
+            if (GoPointerFields.BigItemLocalRot == null)
                 return;
 
             Quaternion holderRotation = item.held.transform.rotation;
-            BigItemLocalRotField.SetValue(item.held, Quaternion.Inverse(holderRotation) * item.transform.rotation);
+            GoPointerFields.BigItemLocalRot(item.held) = Quaternion.Inverse(holderRotation) * item.transform.rotation;
             item.heldRotationOffset = 0f;
-        }
-
-        /// <summary>
-        /// Rotates the quadrant around its single axis, snapping to zero near its calibration
-        /// point (see <see cref="QuadrantZeroDeadzoneDegrees"/>).
-        /// </summary>
-        /// <param name="angle">Rotation to add, in degrees.</param>
-        private void RotateQuadrant(float angle)
-        {
-            if (!Mathf.Approximately(currentItem.heldRotationOffset, lastAppliedQuadrantOffset))
-                quadrantRawOffset = currentItem.heldRotationOffset;
-
-            quadrantRawOffset += angle;
-            lastAppliedQuadrantOffset = ApplyDeadzone(quadrantRawOffset, QuadrantZeroDeadzoneDegrees);
-            currentItem.heldRotationOffset = lastAppliedQuadrantOffset;
-        }
-
-        /// <summary>
-        /// Returns 0 when <paramref name="raw"/> is within <paramref name="zone"/> of it;
-        /// otherwise returns <paramref name="raw"/> unchanged.
-        /// </summary>
-        private static float ApplyDeadzone(float raw, float zone)
-        {
-            return Mathf.Abs(raw) <= zone ? 0f : raw;
         }
     }
 }

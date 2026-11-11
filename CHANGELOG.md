@@ -1,5 +1,42 @@
 # Changelog
 
+### Added
+
+- "Held Item Orientation" config section:
+  - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
+  - Keep rolling level — big items roll around a level axis, even when you look up or down
+  - Keep tilting level — on a boat, big items tilt around an axis level with the deck
+  - Keep facing when looking up and down — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
+  - Keep facing when turning around — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
+- Extended small items rotation: turn, push or pull a small item and you hold it like a big item, free to turn any way and move closer or farther; it goes back into your hand after a few seconds without turning or moving it, when you use it or with the reset key
+  - Pick a small item up with the modifier key held to hold it this way right away
+  - Can be turned off with the new "Extended small items rotation" option
+- Reset orientation: click the mouse wheel to reset the orientation of the held item
+  - Change the key with the new "Reset orientation key" option, or make it work only together with the modifier key with "Reset orientation with modifier key"
+- Easy wall hanging: items hang where you look, and the item in your hand moves to the lower right of your view so it no longer covers the spot
+  - While you aim, the item faces you and turns only the way it will hang, together with "Wall attachment rotation"
+  - Can be turned off with the new "Easy wall hanging" option
+- Compass course alignment: on a boat, right-click a compass lying on deck to turn it to the course, or right-click a compass you hold with extended rotation to keep it on the boat's course while you place it
+  - Can be turned off with the new "Compass course alignment" option
+- Controls hint: while you carry a crate, barrel or other big item, the keys that rotate, turn and push or pull it are shown next to it, unless the game's controls text is turned off
+- "Push/pull with modifier key" option: push and pull with the modifier key and the scroll wheel, so plain scroll keeps the game's own rotation alongside mouse rotation
+- "Lock tilt" option: up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+
+### Changed
+
+- Big items now turn, roll and tilt around level axes, following the deck on a boat, so they stay level when you look up or down; turn off the new "Keep turning level", "Keep rolling level" and "Keep tilting level" options for the old behaviour
+- Big items you carry now keep facing the same way when you look up or down; turn off the new "Keep facing when looking up and down" option for the old behaviour
+- The axis swap key and the "Alternative rotation axis" option now affect only big items; hooks, maps and other small wall-attachable items always roll with left/right mouse movement
+- Turning big items on the alternative axis now goes the other way by default
+- Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
+- The quadrant no longer snaps to zero near level; while it is tilted in your hand, the controls hint shows the key that levels it
+- "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
+
+### Fixed
+
+- Holding the modifier key with a compass, spyglass, fishing rod or another item that uses the scroll wheel no longer freezes the camera
+- Mouse rotation and push/pull no longer stop working on an item that another mod keeps in your hand when you try to drop it, such as a braced Tent and Plank pole
+
 ## [1.2.1] - 2026-10-04
 
 ### Fixed

@@ -6,11 +6,8 @@ namespace DeftHands.Runtime
 {
     /// <summary>
     /// Lets the player roll a held wall-attachable item around the axis pointing into the wall,
-    /// so it attaches at that angle instead of always upright. Roll input passes through a dead
-    /// zone at upright: the item stays upright while the input crosses it, then keeps turning.
-    /// Small items keep their roll here, on top of how the game holds them; big items rotate
-    /// freely, so their roll is read from their actual orientation. Items HooksHangMore manages
-    /// keep their roll in HooksHangMore instead, within its own range.
+    /// so it attaches at that angle. Roll input passes through a dead zone at upright: the item
+    /// stays upright while the input crosses it, then keeps turning.
     /// </summary>
     internal static class WallAttachmentRoll
     {
@@ -19,7 +16,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Items facing more steeply up or down than this face a ceiling, floor or tabletop rather
-        /// than a wall, where there's no upright to measure roll against.
+        /// than a wall.
         /// </summary>
         private const float MaxWallFacingY = 0.8f;
 
@@ -45,8 +42,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// The roll <see cref="RollHeldItem"/> last added to the small held item's rotation. An item
-        /// taken off a surface counts as already carrying its roll, so it eases into the hand from
-        /// exactly where it hung.
+        /// taken off a surface starts out counted as already carrying its roll.
         /// </summary>
         private static float heldItemRoll;
 
@@ -59,18 +55,19 @@ namespace DeftHands.Runtime
         private static float lastWrittenSwing;
 
         /// <summary>
-        /// Whether the held item takes roll input: it's wall-attachable and Wall Attachment
-        /// Rotation is on, or HooksHangMore manages its roll.
+        /// Gets whether the held item currently takes roll input: it's wall-attachable, and Wall
+        /// Attachment Rotation is on or HooksHangMore manages its roll.
         /// </summary>
         public static bool IsActive =>
-            currentItem != null && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
+            currentItem != null
+            && currentItem.wallAttachment
+            && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
 
         /// <summary>
-        /// Starts tracking the held item if it's wall-attachable. A small item taken off a surface
-        /// starts at the roll that would attach it back the same way, other small items start
-        /// upright; a big item keeps its own orientation. The previously tracked item gets back
-        /// any roll taken off it earlier in the frame, so a dropped item doesn't show a frame
-        /// without it.
+        /// Starts tracking the held item. A small item that's wall-attachable when picked up starts
+        /// at the roll HooksHangMore holds it at if HooksHangMore manages it, at the roll that would
+        /// attach it back the same way if it was taken off a surface, and upright otherwise. The
+        /// previously tracked item gets back any roll taken off it earlier in the frame.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
         /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
@@ -79,14 +76,14 @@ namespace DeftHands.Runtime
             if (currentItem != null)
                 RollHeldItem(currentItem);
 
-            currentItem = item is ShipItem shipItem && shipItem.wallAttachment ? shipItem : null;
+            currentItem = item as ShipItem;
             rollInput = 0f;
             uprightInput = 0f;
             isBigItemUpright = false;
             hookSwingOwner = null;
             heldItemRoll = 0f;
 
-            if (currentItem == null)
+            if (currentItem == null || !currentItem.wallAttachment)
                 return;
 
             if (currentItem.big)
@@ -123,8 +120,22 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Resets the held item's roll to upright.
+        /// </summary>
+        public static void ResetRoll()
+        {
+            rollInput = 0f;
+            uprightInput = 0f;
+            isBigItemUpright = false;
+            if (hookSwingOwner == null)
+                return;
+
+            lastWrittenSwing = InputToRoll(rollInput);
+            HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
+        }
+
+        /// <summary>
         /// Drops roll input left inside the dead zone, so the next rotation starts from its centre.
-        /// Input beyond the dead zone is kept.
         /// </summary>
         public static void RecenterDeadzone()
         {
@@ -189,7 +200,8 @@ namespace DeftHands.Runtime
         /// Applies the held item's roll to <paramref name="attachRot"/>, the rotation the game
         /// computed for attaching <paramref name="item"/> at <paramref name="attachPos"/>, both in
         /// <see cref="AttachmentSpace"/>. On a ceiling or floor the item instead attaches turned
-        /// the way it looks in the player's hand.
+        /// the way it looks in the player's hand, or, while <see cref="WallPlacement.LocksRotationAxis"/>,
+        /// at its roll relative to the player's view.
         /// </summary>
         /// <returns>True if <paramref name="attachRot"/> was changed.</returns>
         public static bool TryRollAttachment(ShipItem item, Vector3 attachPos, ref Quaternion attachRot)
@@ -206,11 +218,11 @@ namespace DeftHands.Runtime
                     return false;
 
                 Vector3 cameraPosition = AttachmentSpace.ToAttachmentSpace(item, camera.transform.position);
-                attachRot = FaceSurfaceAsSeen(heldRotation, intoSurface, attachPos - cameraPosition);
+                attachRot = FaceSurface(item, heldRotation, intoSurface, attachPos - cameraPosition);
                 return true;
             }
 
-            float roll = item.big ? MeasureRoll(heldRotation, Vector3.up) : InputToRoll(rollInput);
+            float roll = MeasureWallRoll(item, heldRotation, intoSurface);
             if (roll == 0f)
                 return false;
 
@@ -219,10 +231,37 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Takes the roll <see cref="RollHeldItem"/> added last frame back off the held item, so
-        /// the holding GoPointer eases it into the hand from its unrolled pose instead of
-        /// compounding the roll during the pickup animation. Must be called before the GoPointer
-        /// positions it for the frame.
+        /// Returns the rotation the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches at
+        /// on a ceiling or floor it faces along <paramref name="intoSurface"/>.
+        /// </summary>
+        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
+        private static Quaternion FaceSurface(
+            ShipItem item, Quaternion heldRotation, Vector3 intoSurface, Vector3 viewDirection)
+        {
+            if (!WallPlacement.LocksRotationAxis(item))
+                return FaceSurfaceAsSeen(heldRotation, intoSurface, viewDirection);
+
+            Quaternion holderRotation = AttachmentSpace.ToAttachmentSpace(item, item.held.transform.rotation);
+            return FaceSurfaceAtViewRoll(heldRotation, holderRotation, intoSurface, viewDirection);
+        }
+
+        /// <summary>
+        /// Returns how far the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches rolled
+        /// from upright on a wall it faces along <paramref name="intoWall"/>.
+        /// </summary>
+        private static float MeasureWallRoll(ShipItem item, Quaternion heldRotation, Vector3 intoWall)
+        {
+            if (!item.big)
+                return InputToRoll(rollInput);
+
+            return WallPlacement.LocksRotationAxis(item)
+                ? MeasureBigItemRoll(heldRotation, intoWall)
+                : MeasureRoll(heldRotation, Vector3.up);
+        }
+
+        /// <summary>
+        /// Takes the roll <see cref="RollHeldItem"/> added last frame back off the held item. Must
+        /// be called before the holding GoPointer positions it for the frame.
         /// </summary>
         public static void UnrollHeldItem(PickupableItem item)
         {
@@ -271,9 +310,9 @@ namespace DeftHands.Runtime
         /// Handles a big item's roll crossing upright: holds it there if the roll that went past
         /// upright is still within the dead zone, otherwise sets it to the roll left beyond it.
         /// </summary>
+        /// <param name="up">Visible-world direction that's up in attachment space.</param>
         /// <param name="rollBefore">The roll before crossing, which gives the side it came from.</param>
         /// <param name="overshoot">How far the roll went past upright.</param>
-        /// <param name="up">Visible-world direction that's up in attachment space.</param>
         private static void EnterDeadzone(Transform item, Vector3 up, float rollBefore, float overshoot)
         {
             float input = Mathf.Sign(rollBefore) * (HalfDeadzone - overshoot);
@@ -297,8 +336,7 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns the roll a small item taken off a surface should be held at to attach back the
-        /// way it was. On a ceiling or floor that's relative to the current view. Works in
-        /// attachment space, where the item's physics body sits.
+        /// way it was. On a ceiling or floor that's relative to the current view.
         /// </summary>
         private static float ReadAttachedRoll(ShipItem item)
         {
@@ -333,6 +371,29 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Returns a rotation facing <paramref name="intoSurface"/>, rolled from the direction that looks up on screen
+        /// by as much as <paramref name="heldRotation"/> is rolled around its own forward axis from the holder's up.
+        /// </summary>
+        /// <param name="holderRotation">The rotation of the item's holder.</param>
+        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
+        private static Quaternion FaceSurfaceAtViewRoll(
+            Quaternion heldRotation, Quaternion holderRotation, Vector3 intoSurface, Vector3 viewDirection)
+        {
+            Vector3 forward = heldRotation * Vector3.forward;
+            Vector3 holderUp = holderRotation * Vector3.up;
+            Vector3 reference = Vector3.ProjectOnPlane(holderUp, forward);
+            if (reference.sqrMagnitude < 1e-6f)
+                reference = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, forward);
+
+            float roll = Vector3.SignedAngle(reference, heldRotation * Vector3.up, forward);
+            Vector3 surfaceUp = SeenFromSurface(holderUp, viewDirection, intoSurface);
+            if (surfaceUp == Vector3.zero)
+                surfaceUp = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, intoSurface);
+
+            return Quaternion.LookRotation(intoSurface, surfaceUp) * Quaternion.AngleAxis(roll, Vector3.forward);
+        }
+
+        /// <summary>
         /// Returns the direction perpendicular to <paramref name="normal"/> that lies along the same
         /// line on screen as <paramref name="direction"/>, pointing the same way, or
         /// <see cref="Vector3.zero"/> if there's no such direction.
@@ -346,6 +407,20 @@ namespace DeftHands.Runtime
                 return Vector3.zero;
 
             return Vector3.Dot(result, direction) < 0f ? -result.normalized : result.normalized;
+        }
+
+        /// <summary>
+        /// Returns how far a big item held at <paramref name="heldRotation"/> attaches rolled from
+        /// upright on a wall it faces along <paramref name="intoWall"/>: its own roll when it faces a
+        /// wall in the hand, otherwise its roll once turned the shortest way to face the wall.
+        /// </summary>
+        private static float MeasureBigItemRoll(Quaternion heldRotation, Vector3 intoWall)
+        {
+            Vector3 forward = heldRotation * Vector3.forward;
+            Quaternion facing = FacesWall(forward, Vector3.up)
+                ? heldRotation
+                : Quaternion.FromToRotation(forward, intoWall) * heldRotation;
+            return MeasureRoll(facing, Vector3.up);
         }
 
         /// <summary>

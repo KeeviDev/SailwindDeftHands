@@ -2,6 +2,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using DeftHands.Configuration;
+using DeftHands.Runtime;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,8 @@ using System.Reflection;
 namespace DeftHands
 {
     /// <summary>
-    /// Deft Hands' BepInEx entry point: binds configuration and applies Harmony patches.
+    /// Binds Deft Hands' configuration and applies its Harmony patches when BepInEx loads the
+    /// plugin.
     /// </summary>
     [BepInPlugin(PLUGIN_GUID, PLUGIN_NAME, PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
@@ -28,6 +30,7 @@ namespace DeftHands
             try
             {
                 ModConfig.Bind(Config);
+                RotationControlsHint.WatchSettings(Config);
                 LogSettings();
                 ApplyHarmonyPatches();
             }
@@ -50,8 +53,7 @@ namespace DeftHands
         }
 
         /// <summary>
-        /// Applies every Harmony patch in this assembly. A transpiler that can't find its target
-        /// IL doesn't throw; it logs its own error instead.
+        /// Applies every Harmony patch in this assembly.
         /// </summary>
         private static void ApplyHarmonyPatches()
         {

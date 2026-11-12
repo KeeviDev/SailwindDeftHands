@@ -127,13 +127,23 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Returns whether push and pull move the held <paramref name="item"/>: it is on no surface for items, neither
+        /// placed there by <see cref="FurniturePlacement.IsPlacing"/> nor shown there by the game
+        /// (<see cref="FurniturePlacement.IsShownByGame"/>).
+        /// </summary>
+        public static bool CanMove(PickupableItem item)
+        {
+            return item != null && !FurniturePlacement.IsPlacing(item) && !FurniturePlacement.IsShownByGame(item);
+        }
+
+        /// <summary>
         /// Queues a distance change for the held item, eased in over the following frames on
-        /// top of any movement still in progress.
+        /// top of any movement still in progress, while <see cref="CanMove"/>.
         /// </summary>
         /// <param name="delta">Distance to add; positive moves the item farther away.</param>
         public void Nudge(float delta)
         {
-            if (currentItem == null)
+            if (!CanMove(currentItem))
                 return;
 
             requestedOffset += delta;
@@ -141,13 +151,19 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Applies this frame's share of the queued movement. Discards whatever remains once a
-        /// distance limit is reached.
+        /// distance limit is reached or <see cref="CanMove"/> turns false.
         /// </summary>
         private void Update()
         {
             if (currentItem == null || currentItem.held == null)
             {
                 SetCurrentItem(null);
+                return;
+            }
+
+            if (!CanMove(currentItem))
+            {
+                ResetSmoothing();
                 return;
             }
 

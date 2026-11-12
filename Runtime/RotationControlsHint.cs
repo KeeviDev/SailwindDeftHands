@@ -9,7 +9,7 @@ namespace DeftHands.Runtime
 {
     /// <summary>
     /// Adds the keys that rotate, push, pull and reset the held item to the game's controls text, for the way the item
-    /// is held.
+    /// is held or placed.
     /// </summary>
     internal static class RotationControlsHint
     {
@@ -18,7 +18,9 @@ namespace DeftHands.Runtime
             Rotating,
             Placing,
             ReturningToHand,
-            Leveling
+            Leveling,
+            OnSurface,
+            TurnedOnSurface
         }
 
         private static readonly Dictionary<HintKind, string> Hints = new Dictionary<HintKind, string>();
@@ -41,12 +43,32 @@ namespace DeftHands.Runtime
             if (controlsText == null || !ShowsHintFor(item))
                 return;
 
-            string itemHint = GetHint(GetKind(item));
-            if (itemHint.Length == 0)
+            AddAbove(controlsText, GetHint(GetKind(item)));
+        }
+
+        /// <summary>
+        /// Adds the hint for the held <paramref name="item"/> placed on a surface for items above the text in
+        /// <paramref name="controlsText"/>, unless the game's controls text is off, or the item is being rotated.
+        /// </summary>
+        public static void AddOnSurfaceTo(TextMesh controlsText, PickupableItem item)
+        {
+            if (controlsText == null
+                || !Settings.controlsTextEnabled
+                || !FurniturePlacement.IsPlacing(item)
+                || RotationHandler.GetInstance().IsRotating)
+                return;
+
+            HintKind kind = FurniturePlacement.GetInstance().IsTurned ? HintKind.TurnedOnSurface : HintKind.OnSurface;
+            AddAbove(controlsText, GetHint(kind));
+        }
+
+        private static void AddAbove(TextMesh controlsText, string hint)
+        {
+            if (hint.Length == 0)
                 return;
 
             string text = controlsText.text;
-            controlsText.text = text.Length == 0 ? itemHint : itemHint + "\n" + text;
+            controlsText.text = text.Length == 0 ? hint : hint + "\n" + text;
         }
 
         private static bool ShowsHintFor(PickupableItem item)
@@ -103,11 +125,13 @@ namespace DeftHands.Runtime
             if (kind == HintKind.Rotating || kind == HintKind.Placing)
                 return BuildBigItemHint(kind, modifierKey);
 
-            return JoinLines(new List<string>
-            {
-                BuildRotationLine(modifierKey),
-                BuildResetLine(modifierKey, "back to hand")
-            });
+            var lines = new List<string> { BuildRotationLine(modifierKey) };
+            if (kind == HintKind.TurnedOnSurface)
+                lines.Add(BuildResetLine(modifierKey, "reset"));
+            else if (kind != HintKind.OnSurface)
+                lines.Add(BuildResetLine(modifierKey, "back to hand"));
+
+            return JoinLines(lines);
         }
 
         private static string BuildBigItemHint(HintKind kind, KeyCode modifierKey)

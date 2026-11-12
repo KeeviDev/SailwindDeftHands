@@ -5,8 +5,9 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Keeps <see cref="RotationHandler"/>, <see cref="PushPullHandler"/>, <see cref="WallAttachmentRoll"/>,
-    /// <see cref="HeldItemAside"/>, <see cref="HeldItemVisibility"/> and <see cref="ExtendedHold"/>'s held item in sync
-    /// with GoPointer's own pickup/drop lifecycle.
+    /// <see cref="HeldItemAside"/>, <see cref="HeldItemVisibility"/>, <see cref="ExtendedHold"/>,
+    /// <see cref="FurniturePlacement"/> and <see cref="ModifierPickupClickPatch"/>'s held item in sync with GoPointer's
+    /// own pickup/drop lifecycle.
     /// </summary>
     internal static class HeldItemTracker
     {
@@ -20,6 +21,7 @@ namespace DeftHands.Patches
             HeldItemAside.GetInstance().SetCurrentItem(item);
             HeldItemVisibility.SetCurrentItem(item);
             ExtendedHold.GetInstance().SetCurrentItem(item);
+            FurniturePlacement.GetInstance().SetCurrentItem(item);
             ModifierPickupClickPatch.SetCurrentItem(item);
         }
     }
@@ -44,9 +46,13 @@ namespace DeftHands.Patches
     [HarmonyPatch(typeof(GoPointer), "DropItem")]
     public static class DropItemPatch
     {
-        /// <summary>Stops tracking the held item if the pointer no longer holds anything.</summary>
+        /// <summary>
+        /// Puts an item let go on a surface for items down in the pose it was shown in, then stops tracking the held
+        /// item if the pointer no longer holds anything.
+        /// </summary>
         public static void Postfix(GoPointer __instance)
         {
+            FurniturePlacement.GetInstance().PutDownPlacedItem();
             if (__instance.GetHeldItem() == null)
                 HeldItemTracker.SetCurrentItem(null, false);
         }

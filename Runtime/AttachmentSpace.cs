@@ -30,6 +30,14 @@ namespace DeftHands.Runtime
                 : rotation;
         }
 
+        /// <summary>Converts an attachment-space point to the visible world.</summary>
+        public static Vector3 ToVisibleWorld(ShipItem item, Vector3 point)
+        {
+            return IsOnBoat(item)
+                ? item.currentActualBoat.TransformPoint(item.currentWalkCol.InverseTransformPoint(point))
+                : point;
+        }
+
         /// <summary>Converts an attachment-space rotation to the visible world.</summary>
         public static Quaternion ToVisibleWorld(ShipItem item, Quaternion rotation)
         {

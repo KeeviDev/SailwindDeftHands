@@ -30,6 +30,9 @@ namespace DeftHands.Runtime
 
         private float rotationStartTime;
 
+        /// <summary>Whether the current rotation started while the item was placed on a surface for items.</summary>
+        private bool rotatesOnSurface;
+
         /// <summary>
         /// Whether mouse rotation waits for the rotation modifier key to be released, after a reset made while holding
         /// it.
@@ -39,22 +42,36 @@ namespace DeftHands.Runtime
         private readonly RotationInertia inertia = new RotationInertia();
 
         /// <summary>
-        /// Gets whether the player is currently mouse-rotating the held item, with Mouse Rotation Control on or a
-        /// wall-attachable item while <see cref="WallAttachmentRoll.IsActive"/>; never true for items with their own
-        /// OnScroll behaviour that can't be held like a big item.
+        /// Gets whether the player is currently mouse-rotating the held item where <see cref="TakesMouseRotation"/>;
+        /// never true for items with their own OnScroll behaviour that can't be held like a big item, unless placed on
+        /// a surface for items.
         /// </summary>
         public bool IsRotating =>
             ModInput.IsRotationModifierKeyHeld()
             && IsHoldingRotatableItem
-            && (ModConfig.MouseRotationEnabled.Value || WallAttachmentRoll.IsActive);
+            && TakesMouseRotation(currentItem);
 
         private bool IsHoldingRotatableItem =>
             currentItem != null
             && currentItem.held != null
             && !HeldItemVisibility.IsHidden(currentItem)
-            && (!PickupableItemUtils.HasCustomOnScroll(currentItem)
+            && (FurniturePlacement.IsPlacing(currentItem)
+                || !PickupableItemUtils.HasCustomOnScroll(currentItem)
                 || ExtendedHold.IsHeldLikeBig(currentItem)
                 || ExtendedHold.CanHoldLikeBig(currentItem));
+
+        /// <summary>
+        /// Returns whether mouse movement with the rotation modifier key turns the held <paramref name="item"/> where
+        /// it is now: always on a surface for items it is placed on; elsewhere while Mouse Rotation Control is on, or
+        /// for a wall-attachable item while <see cref="WallAttachmentRoll.IsActive"/>.
+        /// </summary>
+        private static bool TakesMouseRotation(PickupableItem item)
+        {
+            if (FurniturePlacement.IsPlacing(item))
+                return true;
+
+            return ModConfig.MouseRotationEnabled.Value || WallAttachmentRoll.IsActive;
+        }
 
         public static RotationHandler GetInstance()
         {
@@ -95,6 +112,7 @@ namespace DeftHands.Runtime
             {
                 wasRotating = true;
                 rotationStartTime = Time.unscaledTime;
+                rotatesOnSurface = FurniturePlacement.IsPlacing(currentItem);
             }
             if (Time.unscaledTime - rotationStartTime < RotationStartDelay)
                 return;
@@ -103,6 +121,15 @@ namespace DeftHands.Runtime
             if (Mathf.Abs(input.x) < MinAppliedInput && Mathf.Abs(input.y) < MinAppliedInput)
                 return;
 
+            bool isPlacing = FurniturePlacement.IsPlacing(currentItem);
+            if (isPlacing || rotatesOnSurface)
+            {
+                if (isPlacing)
+                    TurnOnSurface(input.x, input.y);
+                return;
+            }
+
+            FurniturePlacement.GetInstance().ForgetRotation();
             ExtendedHold.GetInstance().TryHoldLikeBig(currentItem);
             RotateHeldItem(input.x, input.y);
         }
@@ -117,14 +144,24 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Resets the held item's orientation in the hand. A big item stands upright in <see cref="RotationFrame"/>,
-        /// facing the player's heading; a small item eases back into the usual hold, at the tilt it rests at there
+        /// Resets the held item's orientation. An item placed on a surface for items turns back to its resting rotation
+        /// there, facing the player's heading, and stays held the way it was; in the hand, a big item stands upright in
+        /// <see cref="RotationFrame"/>, facing the player's heading, and a small item stops being held like a big item
+        /// and eases back into the usual hold, at the tilt it rests at there
         /// (<see cref="PickupableItemUtils.GetRestingHeldRotationOffset"/>).
         /// </summary>
         private void ResetHeldItemOrientation()
         {
             inertia.Reset();
             waitsForModifierRelease = ModInput.IsRotationModifierKeyHeld();
+            if (FurniturePlacement.IsPlacing(currentItem))
+            {
+                FurniturePlacement.GetInstance().ResetRotation();
+                return;
+            }
+
+            ExtendedHold.GetInstance().ReturnToHand(currentItem);
+            FurniturePlacement.GetInstance().ForgetRotation();
             WallAttachmentRoll.ResetRoll();
             if (currentItem.big)
             {
@@ -133,7 +170,6 @@ namespace DeftHands.Runtime
             }
             else
             {
-                ExtendedHold.GetInstance().ReturnToHand(currentItem);
                 currentItem.heldRotationOffset = PickupableItemUtils.GetRestingHeldRotationOffset(currentItem);
             }
         }
@@ -156,9 +192,9 @@ namespace DeftHands.Runtime
             if (mainCamera == null)
                 return;
 
+            bool turnsInHand = ModConfig.MouseRotationEnabled.Value;
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
-            bool turnsInHand = ModConfig.MouseRotationEnabled.Value;
             float tiltInput = turnsInHand ? ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical) : 0f;
             bool turnsInsteadOfRolling = turnsInHand && ModInput.TurnsInsteadOfRolls();
 
@@ -195,6 +231,35 @@ namespace DeftHands.Runtime
             WallAttachmentRoll.RollBigItem(item, item.forward, roll * sensitivity);
             WallAttachmentRoll.HoldBigItemUpright(item);
             BigItemRotation.StoreRotation(currentItem);
+        }
+
+        /// <summary>
+        /// Turns the item placed on a surface for items by this frame's input the way a big item turns, around axes
+        /// level with the surface.
+        /// </summary>
+        private static void TurnOnSurface(float horizontalInput, float verticalInput)
+        {
+            Camera mainCamera = Camera.main;
+            if (mainCamera == null)
+                return;
+
+            FurniturePlacement placement = FurniturePlacement.GetInstance();
+            Vector3 up = placement.SurfaceUp;
+            Vector3 tiltAxis = placement.GetTiltAxis(mainCamera.transform);
+            float sensitivity = ModConfig.RotationSensitivity.Value;
+            Vector3 rollAxis = Vector3.Cross(tiltAxis, up);
+            float turnAngle = ModInput.ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity;
+            float rollAngle = -ModInput.ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity;
+            Quaternion turn = ModInput.TurnsInsteadOfRolls()
+                ? Quaternion.AngleAxis(turnAngle, up)
+                : Quaternion.AngleAxis(rollAngle, rollAxis);
+            if (!ModInput.IsTiltLocked())
+            {
+                float tilt = ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical) * sensitivity;
+                turn = Quaternion.AngleAxis(tilt, tiltAxis) * turn;
+            }
+
+            placement.Turn(turn);
         }
     }
 }

@@ -7,9 +7,9 @@ using System.Reflection.Emit;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Makes GoPointer.LateUpdate treat the small item <see cref="ExtendedHold"/> holds like a big item as big: it
-    /// places the item the way it places big items and doesn't draw it on a table or other surface for items;
-    /// <see cref="ExtendedHold"/> keeps the rotation it gives the item.
+    /// Makes GoPointer.LateUpdate treat the small item <see cref="ExtendedHold"/> holds like a big item as big, except
+    /// while <see cref="FurniturePlacement"/> places it on a table or other surface for items: it places the item the
+    /// way it places big items, and <see cref="ExtendedHold"/> keeps the rotation it gives the item.
     /// </summary>
     [HarmonyPatch(typeof(GoPointer), "LateUpdate")]
     public static class HeldLikeBigPatch
@@ -25,7 +25,7 @@ namespace DeftHands.Patches
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             FieldInfo big = AccessTools.Field(typeof(PickupableItem), nameof(PickupableItem.big));
-            MethodInfo isHeldLikeBig = AccessTools.Method(typeof(ExtendedHold), nameof(ExtendedHold.IsHeldLikeBig));
+            MethodInfo isCarriedLikeBig = AccessTools.Method(typeof(HeldLikeBigPatch), nameof(IsCarriedLikeBig));
             var codes = new List<CodeInstruction>(instructions);
             int replaced = 0;
 
@@ -35,7 +35,7 @@ namespace DeftHands.Patches
                     continue;
 
                 code.opcode = OpCodes.Call;
-                code.operand = isHeldLikeBig;
+                code.operand = isCarriedLikeBig;
                 replaced++;
             }
 
@@ -48,6 +48,15 @@ namespace DeftHands.Patches
             }
 
             return codes;
+        }
+
+        /// <summary>
+        /// Returns whether <paramref name="item"/> is big, or is the small item held like a big item and not placed on
+        /// a table or other surface for items.
+        /// </summary>
+        private static bool IsCarriedLikeBig(PickupableItem item)
+        {
+            return ExtendedHold.IsHeldLikeBig(item) && !FurniturePlacement.IsPlacing(item);
         }
     }
 }

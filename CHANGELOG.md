@@ -3,10 +3,11 @@
 ### Added
 
 - **Extended small items rotation:** turn, push or pull a small item to switch it to the extended state, where it gets full freedom of movement, like big items; it goes back into your hand after a few seconds without turning or moving it, when you use it or press the reset key (can be turned off with the new "Extended small items rotation" option, *needs "Mouse rotation control" enabled*)
+- **Reworked item placement on furniture:** a more precise way to place items on tables, shelves and other furniture, with extended rotation ("Neat item placement")
 - **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look ("Easy wall hanging")
 - **New Alt + LMB/F key combination:** hold the modifier key while picking up an item to keep its pose
   - The ability to pick up small items like big ones: right where they lie, keeping their rotation
-- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item; a small item returns to its vanilla state in your hand
+- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item, including while placing it on furniture; a small item returns to its vanilla state in your hand
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - Controls hints for the mod's features
 - "Item Rotation" config section:

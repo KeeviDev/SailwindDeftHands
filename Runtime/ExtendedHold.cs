@@ -5,9 +5,9 @@ using UnityEngine;
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Holds a small item the way the game holds big items once the player rotates, pushes or pulls it, until it is left
-    /// alone for <see cref="IdleTime"/> seconds or used. While it is held this way, it keeps the rotation its holder gives
-    /// it, whatever its own per-frame code does to it.
+    /// Holds a small item the way the game holds big items once the player rotates, pushes or pulls it, until it is
+    /// left alone for <see cref="IdleTime"/> seconds, used, or aimed at furniture the game places it on itself. While
+    /// it is held this way, it keeps the rotation its holder gives it, whatever its own per-frame code does to it.
     /// </summary>
     [DefaultExecutionOrder(10000)]
     public class ExtendedHold : MonoBehaviour
@@ -150,12 +150,14 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Remembers the rotation <paramref name="holder"/> gave the small item held like a big item this frame. Must be
-        /// called after the holder places the item for the frame.
+        /// Remembers the rotation <paramref name="holder"/> gave the small item held like a big item this frame, unless
+        /// <see cref="FurniturePlacement"/> places it on a surface. Must be called after the holder places the item for
+        /// the frame.
         /// </summary>
         public static void RememberPlacedRotation(GoPointer holder)
         {
-            if (instance == null || !instance.isExtended || holder.GetHeldItem() != instance.currentItem)
+            if (instance == null || !instance.isExtended || holder.GetHeldItem() != instance.currentItem
+                || FurniturePlacement.IsPlacing(instance.currentItem))
                 return;
 
             instance.placedRotation = instance.currentItem.transform.rotation;
@@ -173,17 +175,35 @@ namespace DeftHands.Runtime
                 return;
             }
 
-            if (!IsEnabled || HeldItemVisibility.IsHidden(currentItem))
+            if (!IsEnabled || HeldItemVisibility.IsHidden(currentItem)
+                || IsAimedAtFurnitureWithoutNeatPlacement(currentItem))
             {
                 EaseBackIntoHand();
                 return;
             }
 
-            if (RotationHandler.GetInstance().IsRotating || PushPullHandler.GetInstance().IsMoving)
+            bool isActive = RotationHandler.GetInstance().IsRotating
+                || PushPullHandler.GetInstance().IsMoving;
+            if (FurniturePlacement.IsPlacing(currentItem))
+            {
+                lastActivityTime = isActive ? Time.time : lastActivityTime + Time.deltaTime;
+                return;
+            }
+
+            if (isActive)
                 RestartIdleTime();
 
             if (Time.time - lastActivityTime >= IdleTime)
                 EaseBackIntoHand();
+        }
+
+        /// <summary>
+        /// Returns whether the held <paramref name="item"/> is aimed at a table or other surface for items while Neat
+        /// Item Placement is off, so the game shows it there as soon as it is held as a small item.
+        /// </summary>
+        private static bool IsAimedAtFurnitureWithoutNeatPlacement(PickupableItem item)
+        {
+            return !ModConfig.NeatItemPlacement.Value && SurfaceAim.IsAimedAtSurfaceForItems(item as ShipItem);
         }
 
         private void RestartIdleTime()

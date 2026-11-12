@@ -31,5 +31,9 @@ namespace DeftHands.Runtime
         /// <summary>The button or item the holder points at, or null if it points at none.</summary>
         public static readonly AccessTools.FieldRef<GoPointer, GoPointerButton> PointedAtButton =
             ReflectionUtils.FindFieldRef<GoPointer, GoPointerButton>("pointedAtButton");
+
+        /// <summary>Where the holder's look ray last hit, with no collider if it hit nothing.</summary>
+        public static readonly AccessTools.FieldRef<GoPointer, RaycastHit> Hit =
+            ReflectionUtils.FindFieldRef<GoPointer, RaycastHit>("hit");
     }
 }

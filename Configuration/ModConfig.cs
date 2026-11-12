@@ -20,6 +20,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<PushPullMode> PreferredPushPullControl { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
         public static ConfigEntry<bool> ExtendedSmallItemsRotation { get; private set; }
+        public static ConfigEntry<bool> NeatItemPlacement { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
@@ -113,6 +114,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Turn, push or pull a small item to switch it to the extended state, where it gets full freedom " +
                     "of movement, like big items. Needs \"Mouse rotation control\" turned on."));
+
+            NeatItemPlacement = config.Bind(
+                GeneralFeaturesSection,
+                "Neat item placement",
+                true,
+                new ConfigDescription(
+                    "Turns on a reworked, more precise way to place items on tables, shelves and other furniture, " +
+                    "with extended rotation."));
         }
 
         private static void BindWallAttachmentFeatures(ConfigFile config)
@@ -227,7 +236,8 @@ namespace DeftHands.Configuration
                 "Reset orientation key",
                 new KeyboardShortcut(KeyCode.Mouse2),
                 new ConfigDescription(
-                    "Press it to reset the orientation of the held item."));
+                    "Press it to reset the orientation of the held item, including while placing it on furniture or " +
+                    "hanging it on a wall; a small item returns to its vanilla state in your hand."));
 
             ResetOrientationWithModifierKey = config.Bind(
                 KeysSection,

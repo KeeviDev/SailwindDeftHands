@@ -11,6 +11,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Rotate with the mouse.** Hold **Left Alt** and move the mouse — the item turns whichever way you move it. Click the **mouse wheel** to set it straight again.
 - **Big items, full freedom.** Crates, barrels and friends spin on any axis. Hold **right mouse button** while rotating to swap left/right movement between rolling and turning. Turning keeps them level, on deck too, and they can keep facing the same way while you look around.
 - **Small items too.** Turn, push or pull a small item and you hold it like a big one — free to turn any way and move closer or farther. Leave it be for a few seconds, use it or click the **mouse wheel**, and it settles back into your hand. To hold it like this right away, keep **Left Alt** pressed while you pick it up.
+- **Neat placement.** Putting items on tables, shelves and crates is reworked and more precise, and you can turn them any way with **Left Alt** and the mouse before you set them down.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
 - **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
 - **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
@@ -45,8 +46,9 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | **General Features** | | |
 | Mouse rotation control | On | Rotate the item in your hand by moving the mouse. |
 | Preferred push/pull control | Scroll | Scroll moves the held item closer or farther; Scroll With Modifier Key Only does it only with the modifier key, and so does Scroll while mouse rotation is off and legacy rotation is on. |
-| Legacy rotation control | On | Keeps the game's own scroll rotation alongside mouse rotation in your hand. |
+| Legacy rotation control | On | Keeps the game's own scroll rotation alongside mouse rotation in your hand and on furniture. |
 | Extended small items rotation | On | Turn, push or pull a small item and you hold it like a big item. Needs mouse rotation, and turns it on with it. |
+| Neat item placement | On | Reworked, more precise placing of items on furniture, with extended rotation. |
 | **Wall Attachment Features** | | |
 | Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |

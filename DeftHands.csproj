@@ -128,7 +128,12 @@
     <Compile Include="Runtime\ItemParts.cs" />
     <Compile Include="Runtime\WallAttachmentAim.cs" />
     <Compile Include="Runtime\WallPlacement.cs" />
+    <Compile Include="Runtime\FurniturePlacement.cs" />
+    <Compile Include="Runtime\ItemShape.cs" />
     <Compile Include="Runtime\SurfaceAim.cs" />
+    <Compile Include="Runtime\PickupSurface.cs" />
+    <Compile Include="Runtime\PickupRotationMemory.cs" />
+    <Compile Include="Runtime\QuadrantInspection.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
     <Compile Include="Runtime\GoPointerFields.cs" />
     <Compile Include="Runtime\RotationFrame.cs" />
@@ -146,6 +151,7 @@
     <Compile Include="Patches\WallAttachmentAimPatch.cs" />
     <Compile Include="Patches\ItemBoxPatch.cs" />
     <Compile Include="Patches\HeldLikeBigPatch.cs" />
+    <Compile Include="Patches\FurniturePlacementPatches.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\KeeviFixesCompat.cs" />

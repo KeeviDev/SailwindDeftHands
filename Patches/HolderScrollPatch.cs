@@ -54,7 +54,7 @@ namespace DeftHands.Patches
             if (input == 0f)
                 return input;
 
-            if (!HeldItemScroll.LetsHolderReadScroll(heldItem))
+            if (!HeldItemScroll.LetsHolderReadScroll(heldItem, input))
                 return 0f;
 
             ExtendedHold.GetInstance().NoteActivity(heldItem);

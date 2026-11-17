@@ -135,6 +135,7 @@
     <Compile Include="Runtime\ItemParts.cs" />
     <Compile Include="Runtime\WallAttachmentAim.cs" />
     <Compile Include="Runtime\WallPlacement.cs" />
+    <Compile Include="Runtime\PreviewTopArrow.cs" />
     <Compile Include="Runtime\CompassCourseKeeper.cs" />
     <Compile Include="Runtime\FurniturePlacement.cs" />
     <Compile Include="Runtime\ItemShape.cs" />
@@ -157,6 +158,7 @@
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
     <Compile Include="Patches\WallAttachmentAimPatch.cs" />
+    <Compile Include="Patches\PreviewTopArrowPatch.cs" />
     <Compile Include="Patches\ItemBoxPatch.cs" />
     <Compile Include="Patches\HeldLikeBigPatch.cs" />
     <Compile Include="Patches\FurniturePlacementPatches.cs" />

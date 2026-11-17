@@ -15,6 +15,7 @@
   - The ability to keep the depth and rotation of a hung item, to hang it back the same way or make a correction; items hung in the current session don't need the modifier key held
 - **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item, including while placing it on furniture or hanging it on a wall; a small item returns to its vanilla state in your hand
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
+- **Wall attachment top arrow:** while you aim an item at a wall, an arrow beside the preview shows which way its top faces ("Wall attachment top arrow")
 - Controls hints for the mod's features
 - "Item Rotation" config section:
   - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level

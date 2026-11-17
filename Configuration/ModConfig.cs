@@ -26,6 +26,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
         public static ConfigEntry<bool> WallAttachmentTilt { get; private set; }
         public static ConfigEntry<bool> WallAttachmentDepth { get; private set; }
+        public static ConfigEntry<bool> WallAttachmentTopArrow { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
         public static ConfigEntry<bool> HeadingStabilization { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
@@ -169,6 +170,13 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Scroll with the modifier key to hang the item deeper in or farther out from the wall, ceiling " +
                     "or floor."));
+
+            WallAttachmentTopArrow = config.Bind(
+                WallAttachmentFeaturesSection,
+                "Wall attachment top arrow",
+                true,
+                new ConfigDescription(
+                    "While you aim an item at a wall, an arrow beside the preview shows which way its top faces."));
         }
 
         private static void BindItemCarrying(ConfigFile config)

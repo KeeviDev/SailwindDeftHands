@@ -82,7 +82,20 @@ namespace DeftHands.Runtime
                 || HeldItemVisibility.IsHidden(item))
                 return false;
 
-            return ExtendedHold.IsHeldLikeBig(item) || IsTiltedQuadrant(item);
+            return ExtendedHold.IsHeldLikeBig(item) || ShowsPlacingHint(item) || IsTiltedQuadrant(item);
+        }
+
+        /// <summary>
+        /// Returns whether <paramref name="item"/> gets the hint for an item being hung: it
+        /// <see cref="WallPlacement.TurnsOnWall"/>, or it is held in the hand, not like a big item, and
+        /// <see cref="WallPlacement.IsBeingHung"/> with Wall Attachment Rotation or Depth on.
+        /// </summary>
+        private static bool ShowsPlacingHint(PickupableItem item)
+        {
+            return WallPlacement.TurnsOnWall(item)
+                || (!ExtendedHold.IsHeldLikeBig(item)
+                    && WallPlacement.IsBeingHung(item)
+                    && (ModConfig.WallAttachmentRotationEnabled.Value || ModConfig.WallAttachmentDepth.Value));
         }
 
         private static bool IsTiltedQuadrant(PickupableItem item)
@@ -93,11 +106,11 @@ namespace DeftHands.Runtime
 
         private static HintKind GetKind(PickupableItem item)
         {
+            if (ShowsPlacingHint(item))
+                return HintKind.Placing;
+
             if (!ExtendedHold.IsHeldLikeBig(item))
                 return HintKind.Leveling;
-
-            if (WallPlacement.LocksRotationAxis(item))
-                return HintKind.Placing;
 
             if (item.big)
                 return HintKind.Rotating;
@@ -125,8 +138,11 @@ namespace DeftHands.Runtime
             if (modifierKey == KeyCode.None)
                 return "";
 
-            if (kind == HintKind.Rotating || kind == HintKind.Placing)
-                return BuildBigItemHint(kind, modifierKey);
+            if (kind == HintKind.Placing)
+                return BuildPlacingHint(modifierKey);
+
+            if (kind == HintKind.Rotating)
+                return BuildBigItemHint(modifierKey);
 
             var lines = new List<string>();
             if (kind != HintKind.CourseLocked)
@@ -140,12 +156,10 @@ namespace DeftHands.Runtime
             return JoinLines(lines);
         }
 
-        private static string BuildBigItemHint(HintKind kind, KeyCode modifierKey)
+        private static string BuildBigItemHint(KeyCode modifierKey)
         {
             var lines = new List<string>();
-            if (kind == HintKind.Placing)
-                lines.Add(NameOf(modifierKey) + " roll");
-            else if (ModConfig.MouseRotationEnabled.Value)
+            if (ModConfig.MouseRotationEnabled.Value)
                 lines.Add(BuildRotationLines(modifierKey));
 
             if (ModConfig.PushPullEnabled)
@@ -154,6 +168,26 @@ namespace DeftHands.Runtime
                 lines.Add(scroll + " push / pull");
             }
 
+            return JoinLines(lines);
+        }
+
+        /// <summary>
+        /// Returns the lines naming the keys that roll, tilt, set the depth of and reset an item being hung.
+        /// </summary>
+        private static string BuildPlacingHint(KeyCode modifierKey)
+        {
+            var lines = new List<string>();
+            if (ModConfig.WallAttachmentRotationEnabled.Value)
+                lines.Add(NameOf(modifierKey) + " roll");
+
+            KeyCode swapKey = ModConfig.AxisSwapKey.Value.MainKey;
+            if (ModConfig.EasyWallHanging.Value && ModConfig.WallAttachmentTilt.Value && swapKey != KeyCode.None)
+                lines.Add(NameOf(modifierKey) + " + " + NameOf(swapKey) + " tilt");
+
+            if (ModConfig.WallAttachmentDepth.Value)
+                lines.Add(NameOf(modifierKey) + " + Scroll depth");
+
+            lines.Add(BuildResetLine(modifierKey, "reset"));
             return JoinLines(lines);
         }
 

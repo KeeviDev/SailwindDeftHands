@@ -63,15 +63,21 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether mouse movement with the rotation modifier key turns the held <paramref name="item"/> where
-        /// it is now: always on a surface for items it is placed on; elsewhere while Mouse Rotation Control is on, or
-        /// for a wall-attachable item while <see cref="WallAttachmentRoll.IsActive"/>.
+        /// it is now: always on a surface for items it is placed on; on its wall while
+        /// <see cref="WallPlacement.TurnsOnWall"/>, with Wall Attachment Rotation on or
+        /// <see cref="WallAttachmentAdjustment.TakesTiltInput"/>; in the hand while Mouse Rotation Control is on, or
+        /// for an item being hung while <see cref="WallAttachmentRoll.IsActive"/>.
         /// </summary>
         private static bool TakesMouseRotation(PickupableItem item)
         {
             if (FurniturePlacement.IsPlacing(item))
                 return true;
 
-            return ModConfig.MouseRotationEnabled.Value || WallAttachmentRoll.IsActive;
+            if (WallPlacement.TurnsOnWall(item))
+                return ModConfig.WallAttachmentRotationEnabled.Value || WallAttachmentAdjustment.TakesTiltInput(item);
+
+            return ModConfig.MouseRotationEnabled.Value
+                || (WallAttachmentRoll.IsActive && WallPlacement.IsBeingHung(item));
         }
 
         public static RotationHandler GetInstance()
@@ -100,10 +106,7 @@ namespace DeftHands.Runtime
 
             if (!IsRotating)
             {
-                wasRotating = false;
-                waitsForModifierRelease = false;
-                inertia.Reset();
-                WallAttachmentRoll.RecenterDeadzone();
+                EndRotation();
                 return;
             }
 
@@ -111,11 +114,8 @@ namespace DeftHands.Runtime
                 return;
 
             if (!wasRotating)
-            {
-                wasRotating = true;
-                rotationStartTime = Time.unscaledTime;
-                rotatesOnSurface = FurniturePlacement.IsPlacing(currentItem);
-            }
+                BeginRotation();
+
             if (Time.unscaledTime - rotationStartTime < RotationStartDelay)
                 return;
 
@@ -123,17 +123,16 @@ namespace DeftHands.Runtime
             if (Mathf.Abs(input.x) < MinAppliedInput && Mathf.Abs(input.y) < MinAppliedInput)
                 return;
 
-            bool isPlacing = FurniturePlacement.IsPlacing(currentItem);
-            if (isPlacing || rotatesOnSurface)
+            if (FurniturePlacement.IsPlacing(currentItem))
             {
-                if (isPlacing)
-                    TurnOnSurface(input.x, input.y);
-                return;
+                TurnOnSurface(input.x, input.y);
             }
-
-            FurniturePlacement.GetInstance().ForgetRotation();
-            ExtendedHold.GetInstance().TryHoldLikeBig(currentItem);
-            RotateHeldItem(input.x, input.y);
+            else if (!rotatesOnSurface)
+            {
+                FurniturePlacement.GetInstance().ForgetRotation();
+                ExtendedHold.GetInstance().TryHoldLikeBig(currentItem);
+                RotateHeldItem(input.x, input.y);
+            }
         }
 
         /// <summary>
@@ -143,6 +142,22 @@ namespace DeftHands.Runtime
         private Vector2 ReadMouseInput()
         {
             return inertia.Apply(new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")), currentItem);
+        }
+
+        private void BeginRotation()
+        {
+            wasRotating = true;
+            rotationStartTime = Time.unscaledTime;
+            rotatesOnSurface = FurniturePlacement.IsPlacing(currentItem);
+        }
+
+        private void EndRotation()
+        {
+            wasRotating = false;
+            waitsForModifierRelease = false;
+            inertia.Reset();
+            WallAttachmentRoll.RecenterDeadzone();
+            WallAttachmentAdjustment.RecenterDeadzone();
         }
 
         /// <summary>
@@ -166,6 +181,7 @@ namespace DeftHands.Runtime
             ExtendedHold.GetInstance().ReturnToHand(currentItem);
             FurniturePlacement.GetInstance().ForgetRotation();
             WallAttachmentRoll.ResetRoll();
+            WallAttachmentAdjustment.Reset();
             if (currentItem.big)
             {
                 currentItem.heldRotationOffset = 0f;
@@ -180,14 +196,23 @@ namespace DeftHands.Runtime
         /// <summary>
         /// Applies this frame's input to the held item's rotation, as to a big item for an item held like one.
         /// Horizontal movement on the roll axis also rolls wall-attachable small items for attaching; while Mouse
-        /// Rotation Control is off, that roll is all the input does. While
-        /// <see cref="WallPlacement.LocksRotationAxis"/>, only horizontal movement turns the item.
+        /// Rotation Control is off, that roll is all the input does. While <see cref="WallPlacement.TurnsOnWall"/>, the
+        /// input tilts the item to its surface while <see cref="WallAttachmentAdjustment.TakesTiltInput"/>, and
+        /// otherwise only horizontal movement rolls it around its surface's normal while Wall Attachment Rotation is
+        /// on.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
-            if (WallPlacement.LocksRotationAxis(currentItem))
+            if (WallAttachmentAdjustment.TakesTiltInput(currentItem))
             {
-                TurnAroundSurfaceAxis(horizontalInput);
+                TiltToSurface(horizontalInput, verticalInput);
+                return;
+            }
+
+            if (WallPlacement.TurnsOnWall(currentItem))
+            {
+                if (ModConfig.WallAttachmentRotationEnabled.Value)
+                    TurnAroundSurfaceAxis(horizontalInput);
                 return;
             }
 
@@ -215,25 +240,26 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Turns the held item being placed around its own axis into the surface by
-        /// <paramref name="horizontalInput"/>: a small item through its attachment roll, a big item in
-        /// the hand, through a dead zone at upright.
+        /// Tilts the held item being hung to its surface: <paramref name="horizontalInput"/> around the axis running up
+        /// the surface, <paramref name="verticalInput"/> around the axis running across it.
+        /// </summary>
+        private static void TiltToSurface(float horizontalInput, float verticalInput)
+        {
+            float sensitivity = ModConfig.RotationSensitivity.Value;
+            WallAttachmentAdjustment.AddTilt(
+                -ModInput.ApplyInversion(horizontalInput, ModConfig.InvertHangingTurn) * sensitivity,
+                ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical) * sensitivity);
+        }
+
+        /// <summary>
+        /// Rolls the held item being hung around its surface's normal by <paramref name="horizontalInput"/>, a small
+        /// item at the single-axis speed.
         /// </summary>
         private void TurnAroundSurfaceAxis(float horizontalInput)
         {
-            float sensitivity = ModConfig.RotationSensitivity.Value;
+            float speed = currentItem.big ? 1f : SingleAxisSpeedMultiplier;
             float roll = -ModInput.ApplyInversion(horizontalInput, ModConfig.InvertRoll);
-            if (!currentItem.big)
-            {
-                WallAttachmentRoll.AddRollInput(roll * sensitivity * SingleAxisSpeedMultiplier);
-                return;
-            }
-
-            Transform item = currentItem.transform;
-            BigItemRotation.TurnToHolderPose(currentItem);
-            WallAttachmentRoll.RollBigItem(item, item.forward, roll * sensitivity);
-            WallAttachmentRoll.HoldBigItemUpright(item);
-            BigItemRotation.StoreRotation(currentItem);
+            WallAttachmentAdjustment.AddRoll(roll * ModConfig.RotationSensitivity.Value * speed);
         }
 
         /// <summary>

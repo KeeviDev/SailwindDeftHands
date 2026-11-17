@@ -22,17 +22,34 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Returns whether the held <paramref name="item"/> turns only around its axis into the surface: the game
-        /// shows where it will attach, and Wall Attachment Rotation and Easy Wall Hanging are on.
+        /// Gets whether held wall-attachable items turn on the surface they will attach to rather than in the hand:
+        /// Easy Wall Hanging is on, with Wall Attachment Rotation, Tilt or Depth.
         /// </summary>
-        public static bool LocksRotationAxis(PickupableItem item)
+        public static bool TurnsItemsOnWall =>
+            ModConfig.EasyWallHanging.Value
+            && (ModConfig.WallAttachmentRotationEnabled.Value
+                || ModConfig.WallAttachmentTilt.Value
+                || ModConfig.WallAttachmentDepth.Value);
+
+        /// <summary>
+        /// Returns whether the held <paramref name="item"/> is being hung: it is wall-attachable, and the game shows
+        /// where it will attach rather than where it would be set down on a table or other surface for items.
+        /// </summary>
+        public static bool IsBeingHung(PickupableItem item)
         {
-            return ModConfig.WallAttachmentRotationEnabled.Value
-                && ModConfig.EasyWallHanging.Value
-                && item is ShipItem shipItem
+            return item is ShipItem shipItem
                 && shipItem.wallAttachment
                 && ShowsPreview(shipItem)
                 && !SurfaceAim.IsAimedAtSurfaceForItems(shipItem);
+        }
+
+        /// <summary>
+        /// Returns whether the held <paramref name="item"/> turns on the surface it will attach to rather than in the
+        /// hand: it <see cref="IsBeingHung"/>, and <see cref="TurnsItemsOnWall"/>.
+        /// </summary>
+        public static bool TurnsOnWall(PickupableItem item)
+        {
+            return TurnsItemsOnWall && IsBeingHung(item);
         }
     }
 }

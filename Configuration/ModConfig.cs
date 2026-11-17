@@ -24,6 +24,8 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> CompassCourseAlignment { get; private set; }
         public static ConfigEntry<bool> EasyWallHanging { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
+        public static ConfigEntry<bool> WallAttachmentTilt { get; private set; }
+        public static ConfigEntry<bool> WallAttachmentDepth { get; private set; }
         public static ConfigEntry<bool> HorizontalStabilization { get; private set; }
         public static ConfigEntry<bool> HeadingStabilization { get; private set; }
         public static ConfigEntry<float> RotationSensitivity { get; private set; }
@@ -39,6 +41,7 @@ namespace DeftHands.Configuration
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
+        public static ConfigEntry<bool> InvertHangingTurn { get; private set; }
         public static ConfigEntry<bool> RotationInertiaEnabled { get; private set; }
         public static ConfigEntry<RotationWeightPreset> WeightPreset { get; private set; }
 
@@ -150,6 +153,22 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Hold the modifier key and move the mouse left or right to roll the item you hang; it hangs on " +
                     "the wall, ceiling or floor at that angle."));
+
+            WallAttachmentTilt = config.Bind(
+                WallAttachmentFeaturesSection,
+                "Wall attachment tilt",
+                true,
+                new ConfigDescription(
+                    "Hold the modifier key and the axis swap key and move the mouse to tilt the item you hang at any " +
+                    "angle to the wall, ceiling or floor. Needs \"Easy wall hanging\" turned on."));
+
+            WallAttachmentDepth = config.Bind(
+                WallAttachmentFeaturesSection,
+                "Wall attachment depth",
+                true,
+                new ConfigDescription(
+                    "Scroll with the modifier key to hang the item deeper in or farther out from the wall, ceiling " +
+                    "or floor."));
         }
 
         private static void BindItemCarrying(ConfigFile config)
@@ -279,6 +298,14 @@ namespace DeftHands.Configuration
                 new ConfigDescription(
                     "Reverses which way left/right mouse movement turns the held item around the vertical, with " +
                     "\"Switch turn/roll axes\" or the axis swap key."));
+
+            InvertHangingTurn = config.Bind(
+                AxisInversionSection,
+                "Invert hanging turn",
+                false,
+                new ConfigDescription(
+                    "Reverses which way left/right mouse movement turns an item in wall-hanging mode while you also " +
+                    "hold the axis swap key."));
         }
 
         private static void BindWeightSimulation(ConfigFile config)

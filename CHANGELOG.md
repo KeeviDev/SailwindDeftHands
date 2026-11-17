@@ -6,9 +6,13 @@
 - **Reworked item placement on furniture:** a more precise way to place items on tables, shelves and other furniture, with extended rotation ("Neat item placement")
 - **Compass course alignment:** right-click a compass lying on deck to turn it to the boat's course, or right-click a compass you hold to keep it on the boat's course ("Compass course alignment")
 - **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look ("Easy wall hanging")
+- **Extended wall attachment system:** while you aim an item at a wall, you can turn it on every axis and set its depth to hang it just the way you want
+  - Hold the modifier key and the axis swap key to tilt it at any angle ("Wall attachment tilt" *needs "Easy wall hanging" enabled*)
+  - Scroll with the modifier key to hang it deeper in or farther out ("Wall attachment depth")
+  - The ability to invert the left/right turn with the new "Invert hanging turn" option
 - **New Alt + LMB/F key combination:** hold the modifier key while picking up an item to keep its pose
   - The ability to pick up small items like big ones: right where they lie, keeping their rotation
-- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item, including while placing it on furniture; a small item returns to its vanilla state in your hand
+- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item, including while placing it on furniture or hanging it on a wall; a small item returns to its vanilla state in your hand
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - Controls hints for the mod's features
 - "Item Rotation" config section:

@@ -222,10 +222,10 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Moves the held item, with the items riding in its box, for the main camera, as far as <see cref="blend"/> has
-        /// come, so that in its resting pose its upper left corner would sit below and right of the preview on the
-        /// holder's line of sight. While <see cref="WallPlacement.LocksRotationAxis"/>, it also turns the item to face
-        /// the player at its preview's roll, and the resting pose faces the player without that roll.
+        /// Moves the held item, with the items riding in its box, for the main camera, as far as <see cref="blend"/>
+        /// has come, so that in its resting pose its upper left corner would sit below and right of the preview on the
+        /// holder's line of sight. While <see cref="WallPlacement.TurnsOnWall"/>, it also turns the item to face the
+        /// player at its preview's roll, and the resting pose faces the player without that roll.
         /// </summary>
         private void DrawAside(Camera camera)
         {
@@ -240,7 +240,7 @@ namespace DeftHands.Runtime
                 return;
 
             Transform holder = currentItem.held.transform;
-            if (WallPlacement.LocksRotationAxis(currentItem))
+            if (WallPlacement.TurnsOnWall(currentItem))
             {
                 placingRotation = Quaternion.Inverse(holder.rotation) * FacePlayerAtPreviewRoll(holder);
                 isTurnedForPlacing = true;

@@ -8,12 +8,14 @@ using UnityEngine;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Applies <see cref="WallAttachmentRoll"/> to the attachment pose ShipItem.Update computes for the held item each
-    /// frame, and refreshes the placement preview to match. For a hook <see cref="WallAttachmentRoll.AimsHook"/> is true
-    /// for, it works out where the hook attaches the way the game does before that.
+    /// Turns the attachment pose ShipItem.Update computes for the held item each frame by
+    /// <see cref="WallAttachmentAdjustment"/>, or else <see cref="WallAttachmentRoll"/>, moves it to the depth
+    /// <see cref="WallAttachmentAdjustment"/> keeps, and refreshes the placement preview to match. For a hook
+    /// <see cref="WallAttachmentRoll.AimsHook"/> is true for, it works out where the hook attaches the way the game
+    /// does before that.
     /// </summary>
     [HarmonyPatch(typeof(ShipItem), "Update")]
-    public static class WallAttachmentRollPatch
+    public static class WallAttachmentPosePatch
     {
         /// <summary>Farthest a surface may lie from where the attachment ray starts, as in the game.</summary>
         private const float AttachmentReach = 1.3f;
@@ -49,9 +51,13 @@ namespace DeftHands.Patches
             if (!___inRangeOfWall)
                 return;
 
-            bool isTurned = WallAttachmentRoll.TryRollAttachment(__instance, ___attachPos, ref ___attachRot);
-            if (aimsHook || isTurned)
-                SetUpTargeter?.Invoke(__instance, ___attachPos, ___attachRot, __instance.GetComponent<MeshFilter>().sharedMesh);
+            Vector3 intoSurface = ___attachRot * Vector3.forward;
+            bool isTurned = WallAttachmentAdjustment.TryOrientAttachment(__instance, ref ___attachRot)
+                || WallAttachmentRoll.TryRollAttachment(__instance, ___attachPos, ref ___attachRot);
+            bool isDeepened = WallAttachmentAdjustment.TryDeepenAttachment(__instance, intoSurface, ref ___attachPos);
+            if (aimsHook || isTurned || isDeepened)
+                SetUpTargeter?.Invoke(
+                    __instance, ___attachPos, ___attachRot, __instance.GetComponent<MeshFilter>().sharedMesh);
         }
 
         /// <summary>

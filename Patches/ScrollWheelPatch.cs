@@ -19,18 +19,18 @@ namespace DeftHands.Patches
         private const float ScrollInputPerDistance = 40f;
 
         /// <summary>
-        /// Returns whether the holder of <paramref name="item"/> reads this frame's scroll <paramref name="input"/>,
-        /// turning the item with the game's rotate key held or passing the input to the item's scroll behaviour
-        /// otherwise. An item placed on a surface for items is turned around the surface's up instead with the rotate
-        /// key held, while <see cref="GameRotation.TurnsOnSurface"/>, and passes the input on only to a scroll behaviour
-        /// of its own or the game's tilt on the surface. For any other item, the holder reads it while
-        /// <see cref="GameRotation.TurnsInHand"/>, for an item with a scroll behaviour of its own, while the scroll
-        /// drives NANDTweaks' push/pull, and, without a rotate key, while Preferred Push/Pull Control is on.
+        /// Returns whether the holder of <paramref name="item"/> reads this frame's scroll <paramref name="input"/>, to
+        /// turn the item with the game's rotate key held or to pass the input to the item's scroll behaviour. With the
+        /// rotate key held, an item placed on a surface for items is turned around the surface's up instead, while
+        /// <see cref="GameRotation.TurnsOnFurniture"/>.
         /// </summary>
         public static bool LetsHolderReadScroll(PickupableItem item, float input)
         {
             if (item == null)
                 return true;
+
+            if (WallAttachmentAdjustment.TakesDepthInput(item))
+                return !GameInput.GetKey(InputName.RotateH);
 
             if (FurniturePlacement.IsPlacing(item))
                 return GameInput.GetKey(InputName.RotateH)
@@ -68,20 +68,20 @@ namespace DeftHands.Patches
         }
 
         /// <summary>
-        /// Pushes or pulls <paramref name="item"/> by <paramref name="input"/> when the scroll wheel does that right
-        /// now, and returns whether the item's own scroll behaviour, the game's tilt included, runs instead. A held item
-        /// that draws nothing keeps its own scroll behaviour. An item placed on a surface for items is never pushed or
-        /// pulled: it keeps only a scroll behaviour of its own, while not held like a big item, and is tilted on the
-        /// surface otherwise while <see cref="GameRotation.TurnsOnSurface"/> and no NANDTweaks key is held. An item with a
-        /// scroll behaviour of its own keeps it only while not held like a big item, and is pushed and pulled only while
-        /// held like a big item or with the rotation modifier key held. Any other item is pushed and pulled while
-        /// <see cref="ModInput.IsPushPullScrollActive"/> and <see cref="PushPullHandler.CanMove"/>, and keeps the game's
-        /// tilt otherwise while it isn't mouse-rotated and <see cref="GameRotation.TurnsInHand"/>.
+        /// Returns whether the scroll behaviour of <paramref name="item"/>, the game's tilt included, runs for this
+        /// scroll <paramref name="input"/>. When it doesn't, the wheel may push or pull the item, set how deep it
+        /// hangs, or tilt it on the surface for items it is placed on.
         /// </summary>
         public static bool LetsItemScroll(PickupableItem item, float input)
         {
             if (HeldItemVisibility.IsHidden(item))
                 return true;
+
+            if (WallAttachmentAdjustment.TakesDepthInput(item) && !NandTweaksCompat.IsAnyKeyPressed())
+            {
+                WallAttachmentAdjustment.AddScrollInput(input);
+                return false;
+            }
 
             if (FurniturePlacement.IsPlacing(item))
                 return LetsPlacedItemScroll(item, input);

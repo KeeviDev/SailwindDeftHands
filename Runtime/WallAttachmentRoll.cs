@@ -104,12 +104,14 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Returns whether Deft Hands turns the held <paramref name="item"/> itself in place of HooksHangMore's turn: it
-        /// is a hook HooksHangMore turns, and Wall Attachment Rotation is on.
+        /// Returns whether Deft Hands turns the held <paramref name="item"/> itself in place of HooksHangMore's turn:
+        /// it is a hook HooksHangMore turns, and Wall Attachment Rotation is on or
+        /// <see cref="WallPlacement.TurnsItemsOnWall"/>.
         /// </summary>
         public static bool TakesOverHook(ShipItem item)
         {
-            return IsTurnedHook(item) && ModConfig.WallAttachmentRotationEnabled.Value;
+            return IsTurnedHook(item)
+                && (ModConfig.WallAttachmentRotationEnabled.Value || WallPlacement.TurnsItemsOnWall);
         }
 
         /// <summary>
@@ -137,8 +139,9 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Moves the turn HooksHangMore's own controls gave the held hook into the hook's roll and sets HooksHangMore's
-        /// turn back to none, while <see cref="TakesOverHook"/>.
+        /// Moves the turn HooksHangMore's own controls gave the held hook into the hook's roll, on its surface while
+        /// <see cref="WallPlacement.TurnsItemsOnWall"/>, and sets HooksHangMore's turn back to none, while
+        /// <see cref="TakesOverHook"/>.
         /// </summary>
         public static void TakeHookTurn()
         {
@@ -150,7 +153,10 @@ namespace DeftHands.Runtime
                 return;
 
             HooksHangMoreCompat.ClearTurn(hookTurnOwner);
-            AddRollInput(turn);
+            if (WallPlacement.TurnsItemsOnWall)
+                WallAttachmentAdjustment.AddRoll(turn);
+            else
+                AddRollInput(turn);
         }
 
         /// <summary>
@@ -221,8 +227,7 @@ namespace DeftHands.Runtime
         /// Applies the held item's roll to <paramref name="attachRot"/>, the rotation the game
         /// computed for attaching <paramref name="item"/> at <paramref name="attachPos"/>, both in
         /// <see cref="AttachmentSpace"/>. On a ceiling or floor the item instead attaches turned
-        /// the way it looks in the player's hand, or, while <see cref="WallPlacement.LocksRotationAxis"/>,
-        /// at its roll relative to the player's view.
+        /// the way it looks in the player's hand.
         /// </summary>
         /// <returns>True if <paramref name="attachRot"/> was changed.</returns>
         public static bool TryRollAttachment(ShipItem item, Vector3 attachPos, ref Quaternion attachRot)
@@ -239,45 +244,16 @@ namespace DeftHands.Runtime
                     return false;
 
                 Vector3 cameraPosition = AttachmentSpace.ToAttachmentSpace(item, camera.transform.position);
-                attachRot = FaceSurface(item, heldRotation, intoSurface, attachPos - cameraPosition);
+                attachRot = FaceSurfaceAsSeen(heldRotation, intoSurface, attachPos - cameraPosition);
                 return true;
             }
 
-            float roll = MeasureWallRoll(item, heldRotation, intoSurface);
+            float roll = item.big ? MeasureRoll(heldRotation, Vector3.up) : InputToRoll(rollInput);
             if (roll == 0f)
                 return false;
 
             attachRot *= Quaternion.AngleAxis(roll, Vector3.forward);
             return true;
-        }
-
-        /// <summary>
-        /// Returns the rotation the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches at
-        /// on a ceiling or floor it faces along <paramref name="intoSurface"/>.
-        /// </summary>
-        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
-        private static Quaternion FaceSurface(
-            ShipItem item, Quaternion heldRotation, Vector3 intoSurface, Vector3 viewDirection)
-        {
-            if (!WallPlacement.LocksRotationAxis(item))
-                return FaceSurfaceAsSeen(heldRotation, intoSurface, viewDirection);
-
-            Quaternion holderRotation = AttachmentSpace.ToAttachmentSpace(item, item.held.transform.rotation);
-            return FaceSurfaceAtViewRoll(heldRotation, holderRotation, intoSurface, viewDirection);
-        }
-
-        /// <summary>
-        /// Returns how far the held <paramref name="item"/>, turned to <paramref name="heldRotation"/>, attaches rolled
-        /// from upright on a wall it faces along <paramref name="intoWall"/>.
-        /// </summary>
-        private static float MeasureWallRoll(ShipItem item, Quaternion heldRotation, Vector3 intoWall)
-        {
-            if (!item.big)
-                return InputToRoll(rollInput);
-
-            return WallPlacement.LocksRotationAxis(item)
-                ? MeasureBigItemRoll(heldRotation, intoWall)
-                : MeasureRoll(heldRotation, Vector3.up);
         }
 
         /// <summary>
@@ -348,29 +324,6 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Returns a rotation facing <paramref name="intoSurface"/>, rolled from the direction that looks up on screen
-        /// by as much as <paramref name="heldRotation"/> is rolled around its own forward axis from the holder's up.
-        /// </summary>
-        /// <param name="holderRotation">The rotation of the item's holder.</param>
-        /// <param name="viewDirection">Direction from the camera to where the item attaches.</param>
-        private static Quaternion FaceSurfaceAtViewRoll(
-            Quaternion heldRotation, Quaternion holderRotation, Vector3 intoSurface, Vector3 viewDirection)
-        {
-            Vector3 forward = heldRotation * Vector3.forward;
-            Vector3 holderUp = holderRotation * Vector3.up;
-            Vector3 reference = Vector3.ProjectOnPlane(holderUp, forward);
-            if (reference.sqrMagnitude < 1e-6f)
-                reference = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, forward);
-
-            float roll = Vector3.SignedAngle(reference, heldRotation * Vector3.up, forward);
-            Vector3 surfaceUp = SeenFromSurface(holderUp, viewDirection, intoSurface);
-            if (surfaceUp == Vector3.zero)
-                surfaceUp = Vector3.ProjectOnPlane(holderRotation * Vector3.forward, intoSurface);
-
-            return Quaternion.LookRotation(intoSurface, surfaceUp) * Quaternion.AngleAxis(roll, Vector3.forward);
-        }
-
-        /// <summary>
         /// Returns the direction perpendicular to <paramref name="normal"/> that lies along the same
         /// line on screen as <paramref name="direction"/>, pointing the same way, or
         /// <see cref="Vector3.zero"/> if there's no such direction.
@@ -384,20 +337,6 @@ namespace DeftHands.Runtime
                 return Vector3.zero;
 
             return Vector3.Dot(result, direction) < 0f ? -result.normalized : result.normalized;
-        }
-
-        /// <summary>
-        /// Returns how far a big item held at <paramref name="heldRotation"/> attaches rolled from
-        /// upright on a wall it faces along <paramref name="intoWall"/>: its own roll when it faces a
-        /// wall in the hand, otherwise its roll once turned the shortest way to face the wall.
-        /// </summary>
-        private static float MeasureBigItemRoll(Quaternion heldRotation, Vector3 intoWall)
-        {
-            Vector3 forward = heldRotation * Vector3.forward;
-            Quaternion facing = FacesWall(forward, Vector3.up)
-                ? heldRotation
-                : Quaternion.FromToRotation(forward, intoWall) * heldRotation;
-            return MeasureRoll(facing, Vector3.up);
         }
 
         /// <summary>
@@ -420,7 +359,11 @@ namespace DeftHands.Runtime
             item.Rotate(item.forward, roll - MeasureRoll(item.rotation, up), Space.World);
         }
 
-        private static bool FacesWall(Vector3 forward, Vector3 up)
+        /// <summary>
+        /// Returns whether an item facing <paramref name="forward"/> faces a wall rather than a ceiling, floor or
+        /// tabletop, with <paramref name="up"/> as up.
+        /// </summary>
+        public static bool FacesWall(Vector3 forward, Vector3 up)
         {
             return Mathf.Abs(Vector3.Dot(forward, up)) <= MaxWallFacingY;
         }

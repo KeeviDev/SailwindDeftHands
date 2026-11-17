@@ -13,7 +13,7 @@ https://github.com/user-attachments/assets/606b6498-2157-4809-b052-3694c6b663d3
 - **Small items too.** Turn, push or pull a small item and you hold it like a big one — free to turn any way and move closer or farther. Leave it be for a few seconds, use it or click the **mouse wheel**, and it settles back into your hand. To hold it like this right away, keep **Left Alt** pressed while you pick it up.
 - **Neat placement.** Putting items on tables, shelves and crates is reworked and more precise, and you can turn them any way with **Left Alt** and the mouse before you set them down.
 - **Things feel heavy.** A bundle of logs takes a moment to get going and drifts to a stop; a light tobacco crate just spins. Prefer it subtle? Pick the **Light** preset, or switch it off for crisp 1:1 control.
-- **Hang things your way.** Tilt hooks, maps, shelves and other wall-attachable items with the mouse and they hang at that angle — on walls, ceilings and floors. They hang where you look, and while you aim, the item steps aside and faces you, turning only the way it will hang, so you can see the spot.
+- **Hang things your way.** Hooks, maps, shelves and other wall-attachable items hang where you look, on walls, ceilings and floors. While you aim, the item steps aside so you can see the spot: hold **Left Alt** and move the mouse to roll it, add the **right mouse button** to tilt it any way, or scroll with **Left Alt** to sink it in or pull it out.
 - **Compass on course.** On a boat, **right-click** a compass lying on deck and it turns to read your course. When you hold one, **right-click** to keep it on the boat's course while you carry it or place it on a table.
 - **Scroll to push and pull.** The scroll wheel smoothly moves your held item closer or farther. You can also set it to push and pull with **Left Alt** + scroll instead, in case you want to leave plain scroll for the game's own rotation.
 - **Old-school still works.** The game's original scroll rotation stays available — or turn it off if mouse rotation is all you need.
@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/24d5d3af-5c76-4b30-b9fd-e4f86cddca80
 
 ## HooksHangMore
 
-Got **HooksHangMore**? Its hooks turn all the way round like anything else you hang — and its own scroll turn still works too.
+Got **HooksHangMore**? Its hooks turn all the way round, tilt and sink in like anything else you hang — and its own scroll turn still works too.
 
 https://github.com/user-attachments/assets/a25d296d-15f6-44d5-8fb3-f6dc2bb4f8cb
 
@@ -54,6 +54,8 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | **Wall Attachment Features** | | |
 | Easy wall hanging | On | Items hang where you look, and the held item steps aside so you can see the spot. |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
+| Wall attachment tilt | On | Hold the modifier and axis swap keys to tilt items you hang any way. Needs Easy wall hanging. |
+| Wall attachment depth | On | Scroll with the modifier key to hang items deeper in or farther out. |
 | **Item Carrying** | | |
 | Horizontal stabilization | On | Big items keep facing the same way, in the world or on deck, when you look up or down. |
 | Heading stabilization | Off | Big items keep facing the same way, in the world or on deck, when you turn around. |
@@ -73,6 +75,7 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Invert vertical | Off | Reverses which way up/down movement tilts the item. |
 | Invert roll | Off | Reverses left/right rolling of big and wall-attachable items. |
 | Invert turn | Off | Reverses left/right turning of big items, with Switch turn/roll axes or the axis swap key. |
+| Invert hanging turn | Off | Reverses left/right turning of items you tilt while hanging them. |
 | **Weight Simulation** | | |
 | Rotation inertia | On | Heavy items take a moment to spin up and drift to a stop. |
 | Weight preset | Standard | How heavy things feel: Standard or the subtler Light. |

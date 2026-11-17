@@ -5,9 +5,9 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Keeps <see cref="RotationHandler"/>, <see cref="PushPullHandler"/>, <see cref="WallAttachmentRoll"/>,
-    /// <see cref="HeldItemAside"/>, <see cref="HeldItemVisibility"/>, <see cref="ExtendedHold"/>,
-    /// <see cref="FurniturePlacement"/> and <see cref="ModifierPickupClickPatch"/>'s held item in sync with GoPointer's
-    /// own pickup/drop lifecycle.
+    /// <see cref="WallAttachmentAdjustment"/>, <see cref="HeldItemAside"/>, <see cref="HeldItemVisibility"/>,
+    /// <see cref="ExtendedHold"/>, <see cref="FurniturePlacement"/> and <see cref="ModifierPickupClickPatch"/>'s held
+    /// item in sync with GoPointer's own pickup/drop lifecycle.
     /// </summary>
     internal static class HeldItemTracker
     {
@@ -18,6 +18,7 @@ namespace DeftHands.Patches
             RotationHandler.GetInstance().SetCurrentItem(item);
             PushPullHandler.GetInstance().SetCurrentItem(item);
             WallAttachmentRoll.SetCurrentItem(item, wasAttached);
+            WallAttachmentAdjustment.SetCurrentItem(item);
             HeldItemAside.GetInstance().SetCurrentItem(item);
             HeldItemVisibility.SetCurrentItem(item);
             ExtendedHold.GetInstance().SetCurrentItem(item);

@@ -22,7 +22,7 @@ https://github.com/user-attachments/assets/24d5d3af-5c76-4b30-b9fd-e4f86cddca80
 
 ## HooksHangMore
 
-Got **HooksHangMore**? Mouse rotation swings its hooks too — smoothly, no more notch-by-notch scrolling.
+Got **HooksHangMore**? Its hooks turn all the way round like anything else you hang — and its own scroll turn still works too.
 
 https://github.com/user-attachments/assets/a25d296d-15f6-44d5-8fb3-f6dc2bb4f8cb
 

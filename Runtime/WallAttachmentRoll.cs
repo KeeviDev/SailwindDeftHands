@@ -40,28 +40,24 @@ namespace DeftHands.Runtime
         /// </summary>
         private static float heldItemRoll;
 
-        /// <summary>The component HooksHangMore keeps the held item's roll on, or null if it doesn't manage it.</summary>
-        private static Component hookSwingOwner;
-
         /// <summary>
-        /// The roll last written to HooksHangMore, used to detect when its own controls changed it.
+        /// The component HooksHangMore keeps the held hook's own turn on, or null if it doesn't turn it.
         /// </summary>
-        private static float lastWrittenSwing;
+        private static Component hookTurnOwner;
 
         /// <summary>
-        /// Gets whether the held item currently takes roll input: it's wall-attachable, and Wall
-        /// Attachment Rotation is on or HooksHangMore manages its roll.
+        /// Gets whether the held item currently takes roll input: it's wall-attachable and Wall Attachment Rotation is
+        /// on.
         /// </summary>
         public static bool IsActive =>
             currentItem != null
             && currentItem.wallAttachment
-            && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
+            && ModConfig.WallAttachmentRotationEnabled.Value;
 
         /// <summary>
-        /// Starts tracking the held item. A small item that's wall-attachable when picked up starts
-        /// at the roll HooksHangMore holds it at if HooksHangMore manages it, at the roll that would
-        /// attach it back the same way if it was taken off a surface, and upright otherwise. The
-        /// previously tracked item gets back any roll taken off it earlier in the frame.
+        /// Starts tracking the held item. A small item that's wall-attachable when picked up starts at the roll that
+        /// would attach it back the same way if it was taken off a surface, and upright otherwise. The previously tracked
+        /// item gets back any roll taken off it earlier in the frame.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
         /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
@@ -73,7 +69,7 @@ namespace DeftHands.Runtime
             currentItem = item as ShipItem;
             rollInput = 0f;
             BigItemDeadzone.Restart(false);
-            hookSwingOwner = null;
+            hookTurnOwner = null;
             heldItemRoll = 0f;
 
             if (currentItem == null || !currentItem.wallAttachment)
@@ -88,13 +84,10 @@ namespace DeftHands.Runtime
                 return;
             }
 
-            hookSwingOwner = HooksHangMoreCompat.GetSwingOwner(currentItem);
-            if (hookSwingOwner != null)
-            {
-                lastWrittenSwing = HooksHangMoreCompat.GetSwing(hookSwingOwner);
-                rollInput = RollToInput(lastWrittenSwing);
-            }
-            else if (wasAttached)
+            hookTurnOwner = HooksHangMoreCompat.GetTurnOwner(currentItem);
+            if (TakesOverHook(currentItem))
+                HooksHangMoreCompat.ClearTurn(hookTurnOwner);
+            if (wasAttached)
             {
                 rollInput = RollToInput(ReadAttachedRoll(currentItem));
                 heldItemRoll = InputToRoll(rollInput);
@@ -102,16 +95,62 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Adds roll input for a small item: a full turn either way, or HooksHangMore's own range
-        /// for items it manages.
+        /// Adds roll input for a small item, a full turn either way.
         /// </summary>
         /// <param name="degrees">Roll input to add; positive turns counterclockwise as seen facing the wall.</param>
         public static void AddRollInput(float degrees)
         {
-            if (hookSwingOwner != null)
-                AddHookSwingInput(degrees);
-            else
-                rollInput = Mathf.Repeat(rollInput + degrees + InputPeriod / 2f, InputPeriod) - InputPeriod / 2f;
+            rollInput = Mathf.Repeat(rollInput + degrees + InputPeriod / 2f, InputPeriod) - InputPeriod / 2f;
+        }
+
+        /// <summary>
+        /// Returns whether Deft Hands turns the held <paramref name="item"/> itself in place of HooksHangMore's turn: it
+        /// is a hook HooksHangMore turns, and Wall Attachment Rotation is on.
+        /// </summary>
+        public static bool TakesOverHook(ShipItem item)
+        {
+            return IsTurnedHook(item) && ModConfig.WallAttachmentRotationEnabled.Value;
+        }
+
+        /// <summary>
+        /// Returns whether Deft Hands works out where the held <paramref name="item"/> attaches itself: it is a hook
+        /// HooksHangMore turns, and Easy Wall Hanging is on or <see cref="TakesOverHook"/>.
+        /// </summary>
+        public static bool AimsHook(ShipItem item)
+        {
+            return IsTurnedHook(item) && (ModConfig.EasyWallHanging.Value || TakesOverHook(item));
+        }
+
+        /// <summary>
+        /// Returns the turn, in degrees, HooksHangMore's own controls gave the held hook <paramref name="item"/>, or
+        /// none while <see cref="TakesOverHook"/>.
+        /// </summary>
+        /// <param name="item">A hook <see cref="AimsHook"/> is true for.</param>
+        public static float GetHookTurn(ShipItem item)
+        {
+            return TakesOverHook(item) ? 0f : HooksHangMoreCompat.GetTurn(hookTurnOwner);
+        }
+
+        private static bool IsTurnedHook(ShipItem item)
+        {
+            return ReferenceEquals(item, currentItem) && !ReferenceEquals(hookTurnOwner, null);
+        }
+
+        /// <summary>
+        /// Moves the turn HooksHangMore's own controls gave the held hook into the hook's roll and sets HooksHangMore's
+        /// turn back to none, while <see cref="TakesOverHook"/>.
+        /// </summary>
+        public static void TakeHookTurn()
+        {
+            if (!TakesOverHook(currentItem))
+                return;
+
+            float turn = HooksHangMoreCompat.GetTurn(hookTurnOwner);
+            if (turn == 0f)
+                return;
+
+            HooksHangMoreCompat.ClearTurn(hookTurnOwner);
+            AddRollInput(turn);
         }
 
         /// <summary>
@@ -121,11 +160,6 @@ namespace DeftHands.Runtime
         {
             rollInput = 0f;
             BigItemDeadzone.Restart(false);
-            if (hookSwingOwner == null)
-                return;
-
-            lastWrittenSwing = InputToRoll(rollInput);
-            HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
         }
 
         /// <summary>
@@ -193,7 +227,7 @@ namespace DeftHands.Runtime
         /// <returns>True if <paramref name="attachRot"/> was changed.</returns>
         public static bool TryRollAttachment(ShipItem item, Vector3 attachPos, ref Quaternion attachRot)
         {
-            if (!IsActive || item != currentItem || hookSwingOwner != null)
+            if (!IsActive || item != currentItem)
                 return false;
 
             Quaternion heldRotation = AttachmentSpace.ToAttachmentSpace(item, item.transform.rotation);
@@ -269,28 +303,12 @@ namespace DeftHands.Runtime
             if (currentItem == null || item != currentItem)
                 return;
 
-            bool rollsInHand = IsActive && !currentItem.big && hookSwingOwner == null;
+            bool rollsInHand = IsActive && !currentItem.big;
             float roll = rollsInHand ? InputToRoll(rollInput) : 0f;
             if (roll != heldItemRoll)
                 item.transform.rotation *= Quaternion.AngleAxis(roll - heldItemRoll, Vector3.forward);
 
             heldItemRoll = roll;
-        }
-
-        /// <summary>
-        /// Adds roll input for an item HooksHangMore manages, clamped so the roll stays within
-        /// its range. Picks up any change HooksHangMore's own controls made in the meantime.
-        /// </summary>
-        private static void AddHookSwingInput(float degrees)
-        {
-            float swing = HooksHangMoreCompat.GetSwing(hookSwingOwner);
-            if (swing != lastWrittenSwing)
-                rollInput = RollToInput(swing);
-
-            float maxInput = HooksHangMoreCompat.MaxSwing + HalfDeadzone;
-            rollInput = Mathf.Clamp(rollInput + degrees, -maxInput, maxInput);
-            lastWrittenSwing = InputToRoll(rollInput);
-            HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
         }
 
         /// <summary>

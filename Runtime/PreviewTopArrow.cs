@@ -1,6 +1,4 @@
 using DeftHands.Configuration;
-using DeftHands.Utils;
-using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -30,15 +28,6 @@ namespace DeftHands.Runtime
         /// <summary>Width of the arrow's shaft, in metres.</summary>
         private const float ShaftWidth = 0.025f;
 
-        private static readonly AccessTools.FieldRef<GoPointerTargeter, GameObject> Preview =
-            ReflectionUtils.FindFieldRef<GoPointerTargeter, GameObject>("targeter");
-
-        private static readonly AccessTools.FieldRef<GoPointerTargeter, MeshFilter> PreviewFilter =
-            ReflectionUtils.FindFieldRef<GoPointerTargeter, MeshFilter>("filter");
-
-        private static readonly AccessTools.FieldRef<GoPointerTargeter, MeshRenderer> PreviewRenderer =
-            ReflectionUtils.FindFieldRef<GoPointerTargeter, MeshRenderer>("renderer");
-
         private static Mesh arrowMesh;
 
         /// <summary>
@@ -48,8 +37,12 @@ namespace DeftHands.Runtime
         /// </summary>
         public static void Follow(GoPointerTargeter targeter)
         {
-            GameObject preview = Preview != null ? Preview(targeter) : null;
-            MeshRenderer previewRenderer = PreviewRenderer != null ? PreviewRenderer(targeter) : null;
+            GameObject preview = GoPointerTargeterFields.Preview != null
+                ? GoPointerTargeterFields.Preview(targeter)
+                : null;
+            MeshRenderer previewRenderer = GoPointerTargeterFields.PreviewRenderer != null
+                ? GoPointerTargeterFields.PreviewRenderer(targeter)
+                : null;
             if (preview == null || previewRenderer == null)
                 return;
 
@@ -74,7 +67,9 @@ namespace DeftHands.Runtime
         /// </summary>
         private static Vector3 GetArrowBase(GoPointerTargeter targeter)
         {
-            MeshFilter previewFilter = PreviewFilter != null ? PreviewFilter(targeter) : null;
+            MeshFilter previewFilter = GoPointerTargeterFields.PreviewFilter != null
+                ? GoPointerTargeterFields.PreviewFilter(targeter)
+                : null;
             Mesh previewMesh = previewFilter != null ? previewFilter.sharedMesh : null;
             Bounds bounds = previewMesh != null ? previewMesh.bounds : default;
             return new Vector3(bounds.center.x, bounds.max.y + Gap, bounds.center.z);

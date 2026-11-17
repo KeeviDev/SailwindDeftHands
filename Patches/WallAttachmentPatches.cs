@@ -1,5 +1,4 @@
 using DeftHands.Runtime;
-using DeftHands.Utils;
 using HarmonyLib;
 using System;
 using System.Reflection;
@@ -33,9 +32,6 @@ namespace DeftHands.Patches
         private static readonly Action<ShipItem, Vector3, Quaternion, Mesh> SetUpTargeter = SetUpTargeterMethod != null
             ? AccessTools.MethodDelegate<Action<ShipItem, Vector3, Quaternion, Mesh>>(SetUpTargeterMethod)
             : null;
-
-        private static readonly AccessTools.FieldRef<GoPointerTargeter, bool> TargeterActive =
-            ReflectionUtils.FindFieldRef<GoPointerTargeter, bool>("targeterActive");
 
         public static void Postfix(
             ShipItem __instance,
@@ -88,8 +84,8 @@ namespace DeftHands.Patches
         private static void HidePreview(ShipItem item)
         {
             GoPointerTargeter targeter = item.held != null ? item.held.GetTargeter() : null;
-            if (targeter != null && TargeterActive != null)
-                TargeterActive(targeter) = false;
+            if (targeter != null && GoPointerTargeterFields.IsActive != null)
+                GoPointerTargeterFields.IsActive(targeter) = false;
         }
     }
 

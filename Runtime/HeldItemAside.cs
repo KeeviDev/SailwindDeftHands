@@ -1,6 +1,5 @@
 using DeftHands.Configuration;
 using DeftHands.Utils;
-using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -27,9 +26,6 @@ namespace DeftHands.Runtime
 
         /// <summary>Most vertices <see cref="vertices"/> keeps room for between measurements.</summary>
         private const int MaxKeptVertices = 4096;
-
-        private static readonly AccessTools.FieldRef<GoPointerTargeter, Vector3> PreviewPosition =
-            ReflectionUtils.FindFieldRef<GoPointerTargeter, Vector3>("activePos");
 
         private static HeldItemAside instance;
 
@@ -248,8 +244,9 @@ namespace DeftHands.Runtime
 
             Quaternion resting = isTurnedForPlacing ? holder.rotation : holder.rotation * restingRotation;
             Ray previewRay = WallAttachmentAim.LineOfSight(currentItem.held);
-            if (ShowsPreview() && PreviewPosition != null)
-                previewDistance = Vector3.Distance(previewRay.origin, PreviewPosition(currentItem.held.GetTargeter()));
+            if (ShowsPreview() && GoPointerTargeterFields.PreviewPosition != null)
+                previewDistance = Vector3.Distance(
+                    previewRay.origin, GoPointerTargeterFields.PreviewPosition(currentItem.held.GetTargeter()));
 
             Vector3 previewInView = view.InverseTransformPoint(previewRay.GetPoint(previewDistance));
             float viewHeight = 2f * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);

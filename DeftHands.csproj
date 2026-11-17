@@ -145,6 +145,7 @@
     <Compile Include="Runtime\QuadrantInspection.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
     <Compile Include="Runtime\GoPointerFields.cs" />
+    <Compile Include="Runtime\GoPointerTargeterFields.cs" />
     <Compile Include="Runtime\RotationFrame.cs" />
     <Compile Include="Runtime\BigItemFacing.cs" />
     <Compile Include="Patches\BigItemFacingPatch.cs" />

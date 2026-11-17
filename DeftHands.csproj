@@ -125,6 +125,7 @@
     <Compile Include="Runtime\CompassAlignment.cs" />
     <Compile Include="Runtime\CompassCourseHint.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
+    <Compile Include="Runtime\Deadzone.cs" />
     <Compile Include="Runtime\HeldItemAside.cs" />
     <Compile Include="Runtime\ItemBoxRiders.cs" />
     <Compile Include="Runtime\ItemParts.cs" />

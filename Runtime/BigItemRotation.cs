@@ -10,11 +10,11 @@ namespace DeftHands.Runtime
     internal static class BigItemRotation
     {
         /// <summary>
-        /// Rotates a big item freely relative to the camera. Vertical movement tilts it around the camera's right axis;
-        /// horizontal movement rolls it around the camera's forward axis, or turns it around the camera's up axis while
-        /// <paramref name="turnsInsteadOfRolling"/>. Keep Turning Level, Keep Rolling Level and Keep Tilting Level
-        /// replace these axes with level ones in <see cref="RotationFrame"/>. Vertical movement is ignored while
-        /// <see cref="IsTiltLocked"/>. Wall-attachable items pause at upright while rolling through it.
+        /// Rotates a big item freely relative to the camera. Vertical movement tilts it around the camera's right
+        /// axis; horizontal movement rolls it around the camera's forward axis, or turns it around the camera's up axis
+        /// while <paramref name="turnsInsteadOfRolling"/>. Keep Turning Level, Keep Rolling Level and Keep Tilting
+        /// Level replace these axes with level ones in <see cref="RotationFrame"/>. Vertical movement is ignored
+        /// while <see cref="ModInput.IsTiltLocked"/>. Wall-attachable items roll through a dead zone at upright.
         /// </summary>
         /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
         /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>

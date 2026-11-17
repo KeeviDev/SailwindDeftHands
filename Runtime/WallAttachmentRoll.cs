@@ -20,9 +20,6 @@ namespace DeftHands.Runtime
         /// </summary>
         private const float MaxWallFacingY = 0.8f;
 
-        /// <summary>Roll, in degrees, within which an item counts as upright.</summary>
-        private const float UprightTolerance = 0.01f;
-
         private const float HalfDeadzone = UprightDeadzoneDegrees / 2f;
         private const float InputPeriod = 360f + UprightDeadzoneDegrees;
 
@@ -34,11 +31,8 @@ namespace DeftHands.Runtime
         /// </summary>
         private static float rollInput;
 
-        /// <summary>Whether a big item is being held upright by the dead zone.</summary>
-        private static bool isBigItemUpright;
-
-        /// <summary>A big item's roll input within the dead zone while it's held upright.</summary>
-        private static float uprightInput;
+        /// <summary>The dead zone that holds a big item upright while its roll turns through upright.</summary>
+        private static readonly Deadzone BigItemDeadzone = new Deadzone(UprightDeadzoneDegrees);
 
         /// <summary>
         /// The roll <see cref="RollHeldItem"/> last added to the small held item's rotation. An item
@@ -78,8 +72,7 @@ namespace DeftHands.Runtime
 
             currentItem = item as ShipItem;
             rollInput = 0f;
-            uprightInput = 0f;
-            isBigItemUpright = false;
+            BigItemDeadzone.Restart(false);
             hookSwingOwner = null;
             heldItemRoll = 0f;
 
@@ -89,7 +82,9 @@ namespace DeftHands.Runtime
             if (currentItem.big)
             {
                 Vector3 up = AttachmentSpace.UpInWorld(currentItem);
-                isBigItemUpright = FacesWall(currentItem.transform.forward, up) && IsUpright(MeasureRoll(currentItem.transform.rotation, up));
+                BigItemDeadzone.Restart(
+                    FacesWall(currentItem.transform.forward, up)
+                    && Deadzone.IsAtRest(MeasureRoll(currentItem.transform.rotation, up)));
                 return;
             }
 
@@ -125,8 +120,7 @@ namespace DeftHands.Runtime
         public static void ResetRoll()
         {
             rollInput = 0f;
-            uprightInput = 0f;
-            isBigItemUpright = false;
+            BigItemDeadzone.Restart(false);
             if (hookSwingOwner == null)
                 return;
 
@@ -142,7 +136,7 @@ namespace DeftHands.Runtime
             if (Mathf.Abs(rollInput) <= HalfDeadzone)
                 rollInput = 0f;
 
-            uprightInput = 0f;
+            BigItemDeadzone.Recenter();
         }
 
         /// <summary>
@@ -154,30 +148,23 @@ namespace DeftHands.Runtime
             Vector3 up = AttachmentSpace.UpInWorld(currentItem);
             if (!FacesWall(item.forward, up))
             {
-                isBigItemUpright = false;
+                BigItemDeadzone.Restart(false);
                 item.Rotate(axis, degrees, Space.World);
                 return;
             }
 
-            if (isBigItemUpright)
-            {
-                float input = uprightInput + degrees;
-                if (Mathf.Abs(input) <= HalfDeadzone)
-                {
-                    uprightInput = input;
-                    return;
-                }
-
-                isBigItemUpright = false;
-                item.Rotate(axis, input - Mathf.Sign(input) * HalfDeadzone, Space.World);
+            float turn = BigItemDeadzone.Take(degrees, out bool leftUpright);
+            if (turn == 0f)
                 return;
-            }
 
             float rollBefore = MeasureRoll(item.rotation, up);
-            item.Rotate(axis, degrees, Space.World);
-            float rollAfter = MeasureRoll(item.rotation, up);
-            if (CrossedUpright(rollBefore, rollAfter))
-                EnterDeadzone(item, up, rollBefore, Mathf.Abs(rollAfter));
+            item.Rotate(axis, turn, Space.World);
+            if (leftUpright)
+                return;
+
+            float correction = BigItemDeadzone.Settle(rollBefore, MeasureRoll(item.rotation, up));
+            if (correction != 0f)
+                item.Rotate(item.forward, correction, Space.World);
         }
 
         /// <summary>
@@ -186,14 +173,14 @@ namespace DeftHands.Runtime
         /// </summary>
         public static void HoldBigItemUpright(Transform item)
         {
-            if (!isBigItemUpright)
+            if (!BigItemDeadzone.IsHolding)
                 return;
 
             Vector3 up = AttachmentSpace.UpInWorld(currentItem);
             if (FacesWall(item.forward, up))
                 SetRoll(item, up, 0f);
             else
-                isBigItemUpright = false;
+                BigItemDeadzone.Restart(false);
         }
 
         /// <summary>
@@ -304,34 +291,6 @@ namespace DeftHands.Runtime
             rollInput = Mathf.Clamp(rollInput + degrees, -maxInput, maxInput);
             lastWrittenSwing = InputToRoll(rollInput);
             HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
-        }
-
-        /// <summary>
-        /// Handles a big item's roll crossing upright: holds it there if the roll that went past
-        /// upright is still within the dead zone, otherwise sets it to the roll left beyond it.
-        /// </summary>
-        /// <param name="up">Visible-world direction that's up in attachment space.</param>
-        /// <param name="rollBefore">The roll before crossing, which gives the side it came from.</param>
-        /// <param name="overshoot">How far the roll went past upright.</param>
-        private static void EnterDeadzone(Transform item, Vector3 up, float rollBefore, float overshoot)
-        {
-            float input = Mathf.Sign(rollBefore) * (HalfDeadzone - overshoot);
-            if (Mathf.Abs(input) <= HalfDeadzone)
-            {
-                SetRoll(item, up, 0f);
-                isBigItemUpright = true;
-                uprightInput = input;
-            }
-            else
-            {
-                SetRoll(item, up, -Mathf.Sign(rollBefore) * (overshoot - UprightDeadzoneDegrees));
-            }
-        }
-
-        private static bool CrossedUpright(float rollBefore, float rollAfter)
-        {
-            bool nearUpright = Mathf.Abs(rollBefore) < 90f && Mathf.Abs(rollAfter) < 90f;
-            return nearUpright && (IsUpright(rollAfter) || Mathf.Sign(rollBefore) != Mathf.Sign(rollAfter));
         }
 
         /// <summary>
@@ -448,11 +407,6 @@ namespace DeftHands.Runtime
             return Mathf.Abs(Vector3.Dot(forward, up)) <= MaxWallFacingY;
         }
 
-        private static bool IsUpright(float roll)
-        {
-            return Mathf.Abs(roll) < UprightTolerance;
-        }
-
         private static float InputToRoll(float input)
         {
             return Mathf.Abs(input) <= HalfDeadzone ? 0f : input - Mathf.Sign(input) * HalfDeadzone;
@@ -460,7 +414,7 @@ namespace DeftHands.Runtime
 
         private static float RollToInput(float roll)
         {
-            return IsUpright(roll) ? 0f : roll + Mathf.Sign(roll) * HalfDeadzone;
+            return Deadzone.IsAtRest(roll) ? 0f : roll + Mathf.Sign(roll) * HalfDeadzone;
         }
     }
 }

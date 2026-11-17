@@ -217,7 +217,7 @@ namespace DeftHands.Runtime
         /// <summary>
         /// Turns the held item being placed around its own axis into the surface by
         /// <paramref name="horizontalInput"/>: a small item through its attachment roll, a big item in
-        /// the hand, pausing at upright while turning through it.
+        /// the hand, through a dead zone at upright.
         /// </summary>
         private void TurnAroundSurfaceAxis(float horizontalInput)
         {

@@ -47,15 +47,16 @@ namespace DeftHands.Runtime
         /// through rotations and resets in the hand when the item isn't flat. Must be called before its physics twin
         /// leaves where it lay.
         /// </summary>
+        /// <param name="wasHung">Whether the item was taken off where it was hung, which leaves nothing
         /// remembered.</param>
-        public void OnPickup(ShipItem item, ItemShape shape)
+        public void OnPickup(ShipItem item, ItemShape shape, bool wasHung)
         {
             Forget();
             if (item == null)
                 return;
 
             bool wasPlacedRecently = placedItems.WasPutDownRecently(item);
-            if (!(wasPlacedRecently || ExtendedHold.IsPickedUpWithModifierKey(item)))
+            if (wasHung || !(wasPlacedRecently || ExtendedHold.IsPickedUpWithModifierKey(item)))
                 return;
 
             ItemRigidbody body = item.GetItemRigidbody();

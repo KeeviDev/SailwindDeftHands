@@ -56,12 +56,12 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Starts tracking the held item. A small item that's wall-attachable when picked up starts at the roll that
-        /// would attach it back the same way if it was taken off a surface, and upright otherwise. The previously tracked
-        /// item gets back any roll taken off it earlier in the frame.
+        /// would attach it back the same way if it takes the pose it hung with, and upright otherwise. The previously
+        /// tracked item gets back any roll taken off it earlier in the frame.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
-        /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
-        public static void SetCurrentItem(PickupableItem item, bool wasAttached)
+        /// <param name="takesHungPose">Whether the item, taken off a surface, takes the pose it hung with.</param>
+        public static void SetCurrentItem(PickupableItem item, bool takesHungPose)
         {
             if (currentItem != null)
                 RollHeldItem(currentItem);
@@ -87,7 +87,7 @@ namespace DeftHands.Runtime
             hookTurnOwner = HooksHangMoreCompat.GetTurnOwner(currentItem);
             if (TakesOverHook(currentItem))
                 HooksHangMoreCompat.ClearTurn(hookTurnOwner);
-            if (wasAttached)
+            if (takesHungPose)
             {
                 rollInput = RollToInput(ReadAttachedRoll(currentItem));
                 heldItemRoll = InputToRoll(rollInput);

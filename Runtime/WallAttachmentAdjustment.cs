@@ -17,7 +17,10 @@ namespace DeftHands.Runtime
         private const float DeadzoneDegrees = 18f;
 
         /// <summary>Farthest the item hangs into or out from its surface, in metres.</summary>
-        private const float MaxDepth = 0.8f;
+        public const float MaxDepth = 0.8f;
+
+        /// <summary>Smallest depth, in metres, read from a hung item that counts as hanging in or out.</summary>
+        private const float MinReadDepth = 0.0005f;
 
         /// <summary>Metres the item moves into its surface per unit of the holder's scroll input.</summary>
         private const float DepthPerScrollInput = 0.002f;
@@ -46,6 +49,24 @@ namespace DeftHands.Runtime
         /// How far the item hangs into its surface, in metres; a negative depth hangs it out from it.
         /// </summary>
         private static float depth;
+
+        /// <summary>
+        /// The frame in which <see cref="TryOrientAttachment"/> last turned the held item's attachment pose.
+        /// </summary>
+        private static int orientedFrame = -1;
+
+        /// <summary>
+        /// The frame in which <see cref="TryDeepenAttachment"/> last moved the held item's attachment pose.
+        /// </summary>
+        private static int deepenedFrame = -1;
+
+        /// <summary>Gets the held item's rotation relative to the frame of its surface.</summary>
+        public static Quaternion Orientation => orientation;
+
+        /// <summary>
+        /// Gets how far the held item hangs into its surface, in metres; a negative depth hangs it out from it.
+        /// </summary>
+        public static float Depth => depth;
 
         /// <summary>
         /// Registers the currently held item and starts it upright and flat against its surface at no depth.
@@ -102,6 +123,46 @@ namespace DeftHands.Runtime
             depth = Mathf.Clamp(depth + input * DepthPerScrollInput, -MaxDepth, MaxDepth);
         }
 
+        /// <summary>
+        /// Gives the held item the rotation relative to its surface's frame and the depth into it, in metres, it hangs
+        /// with, keeping only the roll while Wall Attachment Tilt is off.
+        /// </summary>
+        public static void RestorePose(Quaternion rotationOnSurface, float depthMetres)
+        {
+            orientation = Quaternion.Normalize(rotationOnSurface);
+            if (!ModConfig.WallAttachmentTilt.Value)
+                orientation = Quaternion.AngleAxis(MeasureOrZero(RollAxis), Vector3.forward);
+
+            depth = Mathf.Abs(depthMetres) < MinReadDepth ? 0f : Mathf.Clamp(depthMetres, -MaxDepth, MaxDepth);
+            RestartDeadzones();
+        }
+
+        /// <summary>
+        /// Returns whether <paramref name="item"/> is the held item this rotation and depth belong to.
+        /// </summary>
+        public static bool IsTracking(ShipItem item)
+        {
+            return item != null && item == currentItem;
+        }
+
+        /// <summary>
+        /// Returns whether <see cref="TryOrientAttachment"/> turned the attachment pose of <paramref name="item"/> in
+        /// this frame.
+        /// </summary>
+        public static bool IsOrientedThisFrame(ShipItem item)
+        {
+            return IsTracking(item) && orientedFrame == Time.frameCount;
+        }
+
+        /// <summary>
+        /// Returns whether <see cref="TryDeepenAttachment"/> moved the attachment pose of <paramref name="item"/> in
+        /// this frame.
+        /// </summary>
+        public static bool IsDeepenedThisFrame(ShipItem item)
+        {
+            return IsTracking(item) && deepenedFrame == Time.frameCount;
+        }
+
         /// <summary>Turns the item back upright and flat against its surface at no depth.</summary>
         public static void Reset()
         {
@@ -131,6 +192,7 @@ namespace DeftHands.Runtime
                 return false;
 
             attachRot = GetSurfaceFrame(item, attachRot * Vector3.forward) * orientation;
+            orientedFrame = Time.frameCount;
             return true;
         }
 
@@ -149,6 +211,7 @@ namespace DeftHands.Runtime
                 return false;
 
             attachPos += intoSurface * depth;
+            deepenedFrame = Time.frameCount;
             return true;
         }
 
@@ -156,7 +219,7 @@ namespace DeftHands.Runtime
         /// Returns the rotation facing <paramref name="intoSurface"/> whose up runs up a wall, or whose right is the
         /// player's view right across a ceiling or floor.
         /// </summary>
-        private static Quaternion GetSurfaceFrame(ShipItem item, Vector3 intoSurface)
+        public static Quaternion GetSurfaceFrame(ShipItem item, Vector3 intoSurface)
         {
             if (WallAttachmentRoll.FacesWall(intoSurface, Vector3.up))
                 return Quaternion.LookRotation(intoSurface, Vector3.up);
@@ -215,6 +278,12 @@ namespace DeftHands.Runtime
             return itemDirection.sqrMagnitude < VectorUtils.MinDirectionSqrMagnitude
                 ? float.NaN
                 : Vector3.SignedAngle(reference, itemDirection, surfaceAxis);
+        }
+
+        private static float MeasureOrZero(int axis)
+        {
+            float angle = Measure(axis);
+            return float.IsNaN(angle) ? 0f : angle;
         }
     }
 }

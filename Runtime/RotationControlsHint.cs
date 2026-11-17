@@ -241,7 +241,8 @@ namespace DeftHands.Runtime
             return turns ? "turn" : "roll";
         }
 
-        private static string NameOf(KeyCode key)
+        /// <summary>Returns the short name the hints give <paramref name="key"/>.</summary>
+        public static string NameOf(KeyCode key)
         {
             switch (key)
             {

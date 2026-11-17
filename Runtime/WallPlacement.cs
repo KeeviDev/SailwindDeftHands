@@ -32,6 +32,13 @@ namespace DeftHands.Runtime
                 || ModConfig.WallAttachmentDepth.Value);
 
         /// <summary>
+        /// Gets whether the player sets how held wall-attachable items hang: Wall Attachment Rotation or Depth is on,
+        /// or <see cref="TurnsItemsOnWall"/>.
+        /// </summary>
+        public static bool AdjustsHangingPose =>
+            ModConfig.WallAttachmentRotationEnabled.Value || ModConfig.WallAttachmentDepth.Value || TurnsItemsOnWall;
+
+        /// <summary>
         /// Returns whether the held <paramref name="item"/> is being hung: it is wall-attachable, and the game shows
         /// where it will attach rather than where it would be set down on a table or other surface for items.
         /// </summary>

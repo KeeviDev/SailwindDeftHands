@@ -157,7 +157,8 @@ namespace DeftHands.Runtime
         /// it lay at, while <see cref="PickupRotationMemory"/> remembers it.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
-        public void SetCurrentItem(PickupableItem item)
+        /// <param name="wasHung">Whether the item was taken off where it was hung while the game runs.</param>
+        public void SetCurrentItem(PickupableItem item, bool wasHung)
         {
             if (currentShape != null)
                 currentShape.Discard();
@@ -170,7 +171,7 @@ namespace DeftHands.Runtime
             remembersCourse = false;
             overlaps = false;
             placedItem = null;
-            pickupRotation.OnPickup(currentItem, currentShape);
+            pickupRotation.OnPickup(currentItem, currentShape, wasHung);
         }
 
         /// <summary>

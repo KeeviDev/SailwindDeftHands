@@ -1,6 +1,3 @@
-using DeftHands.Compat;
-using DeftHands.Configuration;
-using DeftHands.Utils;
 using HarmonyLib;
 using System.Collections.Generic;
 using System.Reflection;
@@ -9,37 +6,24 @@ using System.Reflection.Emit;
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Blocks GoPointer's built-in scroll-wheel rotation (both axes) when Legacy Rotation
-    /// Control is off, except on items with their own OnScroll behaviour and while the scroll
-    /// drives NANDTweaks' push/pull or Push/Pull on Scroll Wheel.
+    /// Lets GoPointer.LateUpdate turn or scroll the held item with the scroll wheel only where
+    /// <see cref="HeldItemScroll.LetsHolderReadScroll"/> allows it.
     /// </summary>
     [HarmonyPatch(typeof(GoPointer), "LateUpdate")]
-    public static class LegacyRotationBlockPatch
+    public static class HolderScrollPatch
     {
-        private static bool shouldBlockRotation;
+        private static PickupableItem heldItem;
 
         [HarmonyPrefix]
         private static void Prefix(GoPointer __instance)
         {
-            shouldBlockRotation = ShouldBlockRotation(__instance.GetHeldItem());
-        }
-
-        private static bool ShouldBlockRotation(PickupableItem heldItem)
-        {
-            if (ModConfig.LegacyRotationEnabled.Value || heldItem == null)
-                return false;
-
-            if (PickupableItemUtils.HasCustomOnScroll(heldItem) || NandTweaksCompat.IsPushKeyPressed())
-                return false;
-
-            bool isRotationKeyHeld = GameInput.GetKey(InputName.RotateH) || NandTweaksCompat.IsRotateKeyPressed();
-            return isRotationKeyHeld || !ModConfig.PushPullScrollEnabled.Value;
+            heldItem = __instance.GetHeldItem();
         }
 
         [HarmonyTranspiler]
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            MethodInfo mask = AccessTools.Method(typeof(LegacyRotationBlockPatch), nameof(MaskScrollValue));
+            MethodInfo mask = AccessTools.Method(typeof(HolderScrollPatch), nameof(MaskScrollValue));
             var codes = new List<CodeInstruction>(instructions);
             bool patched = false;
 
@@ -63,9 +47,9 @@ namespace DeftHands.Patches
             return codes;
         }
 
-        private static float MaskScrollValue(float original)
+        private static float MaskScrollValue(float input)
         {
-            return shouldBlockRotation ? 0f : original;
+            return HeldItemScroll.LetsHolderReadScroll(heldItem) ? input : 0f;
         }
     }
 }

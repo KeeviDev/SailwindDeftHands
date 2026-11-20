@@ -42,9 +42,9 @@ Tweak everything in `BepInEx/config/com.keevi.defthands.cfg`, or in-game with [C
 | Setting | Default | What it does |
 |---|---|---|
 | **General Features** | | |
-| Mouse rotation control | On | Rotate held items by moving the mouse. |
-| Push/pull on scroll wheel | On | Scroll moves the held item closer or farther. |
-| Legacy rotation control | On | Keeps the game's original scroll rotation around. |
+| Mouse rotation control | On | Rotate the item in your hand by moving the mouse. |
+| Push/pull on scroll wheel | On | Scroll moves the held item closer or farther; only with the modifier key while mouse rotation is off and legacy rotation is on. |
+| Legacy rotation control | On | Keeps the game's own scroll rotation alongside mouse rotation in your hand. |
 | **Wall Attachment Features** | | |
 | Wall attachment rotation | On | Roll hooks, shelves and other wall-attachable items to hang them at an angle. |
 | **Item Carrying** | | |

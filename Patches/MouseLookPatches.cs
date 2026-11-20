@@ -1,4 +1,3 @@
-using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
 using System.Collections.Generic;
@@ -19,8 +18,8 @@ namespace DeftHands.Patches
     }
 
     /// <summary>
-    /// Lets the camera turn while the built-in Q axis key is held when Legacy Rotation Control
-    /// is off.
+    /// Lets the camera turn while the built-in Q axis key is held, except while
+    /// <see cref="GameRotation.KeepsRotateKey"/>.
     /// </summary>
     [HarmonyPatch(typeof(MouseLook), "Update")]
     public static class MouseLookRotateHUnblockPatch
@@ -56,7 +55,7 @@ namespace DeftHands.Patches
 
         private static bool MaskRotateHCheck(bool original)
         {
-            return ModConfig.LegacyRotationEnabled.Value && original;
+            return GameRotation.KeepsRotateKey && original;
         }
     }
 }

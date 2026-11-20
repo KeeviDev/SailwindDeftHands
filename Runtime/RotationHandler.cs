@@ -44,15 +44,16 @@ namespace DeftHands.Runtime
         private float lastAppliedQuadrantOffset;
 
         /// <summary>
-        /// Gets whether the player is currently mouse-rotating the held item; never true for items
-        /// with their own OnScroll behaviour.
+        /// Gets whether the player is currently mouse-rotating the held item, with Mouse Rotation Control on or a
+        /// wall-attachable item while <see cref="WallAttachmentRoll.IsActive"/>; never true for items with their own
+        /// OnScroll behaviour.
         /// </summary>
         public bool IsRotating =>
-            ModConfig.MouseRotationEnabled.Value
-            && isCurrentItemRotatable
+            isCurrentItemRotatable
             && ModInput.IsRotationModifierKeyHeld()
             && currentItem != null
-            && currentItem.held != null;
+            && currentItem.held != null
+            && (ModConfig.MouseRotationEnabled.Value || WallAttachmentRoll.IsActive);
 
         public static RotationHandler GetInstance()
         {
@@ -107,7 +108,8 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Applies this frame's input to the held item's rotation. Horizontal movement on the roll
-        /// axis also rolls wall-attachable small items for attaching.
+        /// axis also rolls wall-attachable small items for attaching; while Mouse Rotation Control is off, that roll is
+        /// all the input does.
         /// </summary>
         private void RotateHeldItem(float horizontalInput, float verticalInput)
         {
@@ -117,8 +119,9 @@ namespace DeftHands.Runtime
 
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
-            float tiltInput = ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical);
-            bool turnsInsteadOfRolling = ModInput.TurnsInsteadOfRolls();
+            bool turnsInHand = ModConfig.MouseRotationEnabled.Value;
+            float tiltInput = turnsInHand ? ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical) : 0f;
+            bool turnsInsteadOfRolling = turnsInHand && ModInput.TurnsInsteadOfRolls();
 
             if (WallAttachmentRoll.IsActive && !currentItem.big)
             {

@@ -107,6 +107,7 @@
     <Compile Include="Runtime\RotationHandler.cs" />
     <Compile Include="Runtime\RotationInertia.cs" />
     <Compile Include="Runtime\BigItemRotation.cs" />
+    <Compile Include="Runtime\GameRotation.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
@@ -117,7 +118,7 @@
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />
-    <Compile Include="Patches\LegacyRotationBlockPatch.cs" />
+    <Compile Include="Patches\HolderScrollPatch.cs" />
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />

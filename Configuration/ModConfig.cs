@@ -38,7 +38,7 @@ namespace DeftHands.Configuration
 
         /// <summary>
         /// Binds every setting to <paramref name="config"/>, section by section in the order Configuration Manager shows
-        /// the sections, and keeps Push/Pull on Scroll Wheel on only together with Mouse Rotation Control.
+        /// the sections.
         /// </summary>
         public static void Bind(ConfigFile config)
         {
@@ -49,31 +49,6 @@ namespace DeftHands.Configuration
             BindKeys(config);
             BindAxisInversion(config);
             BindWeightSimulation(config);
-            KeepPushPullDependentOnMouseRotation();
-        }
-
-        /// <summary>
-        /// Keeps Push/Pull on Scroll Wheel enabled only together with mouse rotation control:
-        /// turning mouse rotation off turns push/pull off, and turning push/pull on turns mouse
-        /// rotation back on.
-        /// </summary>
-        private static void KeepPushPullDependentOnMouseRotation()
-        {
-            DisablePushPullWithoutMouseRotation();
-
-            MouseRotationEnabled.SettingChanged += (sender, args) => DisablePushPullWithoutMouseRotation();
-
-            PushPullScrollEnabled.SettingChanged += (sender, args) =>
-            {
-                if (PushPullScrollEnabled.Value && !MouseRotationEnabled.Value)
-                    MouseRotationEnabled.Value = true;
-            };
-        }
-
-        private static void DisablePushPullWithoutMouseRotation()
-        {
-            if (!MouseRotationEnabled.Value && PushPullScrollEnabled.Value)
-                PushPullScrollEnabled.Value = false;
         }
 
         private static void BindGeneralFeatures(ConfigFile config)
@@ -83,14 +58,15 @@ namespace DeftHands.Configuration
                 "Mouse rotation control",
                 true,
                 new ConfigDescription(
-                    "Hold the modifier key and move the mouse to rotate the held item."));
+                    "Hold the modifier key and move the mouse to rotate the item in your hand."));
 
             PushPullScrollEnabled = config.Bind(
                 GeneralFeaturesSection,
                 "Push/pull on scroll wheel",
                 true,
                 new ConfigDescription(
-                    "Scroll to move the held item closer or farther."));
+                    "Scroll to move the held item closer or farther; while mouse rotation is off and legacy rotation is " +
+                    "on, only with the modifier key held."));
 
             LegacyRotationEnabled = config.Bind(
                 GeneralFeaturesSection,

@@ -16,6 +16,9 @@
 - **Reworked item holding system:** by default only horizontal stabilization is on, which keeps the held item facing the same way when you look up or down, in the world or relative to the deck on a boat ("Horizontal stabilization"); keeping its facing when you turn around stays off by default ("Heading stabilization")
 - **New axis orientation for more predictable item rotation:** items now turn, roll and tilt around level axes, following the deck on a boat, instead of depending on your view; turn off the new "Keep turning level", "Keep rolling level" and "Keep tilting level" options for the old behaviour
 - Configuration file is reorganized: the main options now sit in the "General Features" and "Wall Attachment Features" sections; options that moved start from their defaults, so if you changed them, set them again
+- "Mouse rotation control" now affects only items in your hand: items you hang on walls turn with their own options
+- "Legacy rotation control" turned off now blocks the game's own rotation only where mouse rotation is enabled and available, so with "Mouse rotation control" off the game's rotation stays under your control
+- "Push/pull on scroll wheel" no longer turns off with mouse rotation; it needs the modifier key while mouse rotation is off and legacy rotation is on, so plain scroll is available for vanilla rotation
 - "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only big items, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
 - Turning big items on the alternative axis now goes the other way by default
 - "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again

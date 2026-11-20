@@ -1,8 +1,5 @@
-using BepInEx.Configuration;
 using DeftHands.Configuration;
 using DeftHands.Utils;
-using HarmonyLib;
-using System.Reflection;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -19,18 +16,6 @@ namespace DeftHands.Runtime
         private const float QuadrantZeroDeadzoneDegrees = 2f;
 
         /// <summary>
-        /// Maps ShipItem.mass to a 0..1 heaviness factor: no effect at or below
-        /// <see cref="WeightEffectThreshold"/>, full effect at or above
-        /// <see cref="WeightEffectCap"/>, with <see cref="WeightCurvePower"/> shaping the ramp.
-        /// </summary>
-        private const float WeightEffectThreshold = 0f;
-        private const float WeightEffectCap = 900f;
-        private const float WeightCurvePower = 0.4f;
-
-        private const float StandardSmoothTime = 0.25f;
-        private const float LightSmoothTime = 0.1f;
-
-        /// <summary>
         /// Rotation speed of single-axis rotations (small items, quadrant, wall-attachment roll)
         /// relative to big items.
         /// </summary>
@@ -39,21 +24,13 @@ namespace DeftHands.Runtime
         /// <summary>Mouse movement below this on both axes is ignored.</summary>
         private const float MinAppliedInput = 0.001f;
 
-        private static readonly FieldInfo BigItemLocalRotField = AccessTools.Field(typeof(GoPointer), "bigItemLocalRot");
-
         private static RotationHandler instance;
 
         private PickupableItem currentItem;
 
         private bool isCurrentItemRotatable;
 
-        /// <summary>Weight-smoothed replacement for this frame's raw mouse delta.</summary>
-        private float smoothedX;
-        private float smoothedY;
-
-        /// <summary>Mathf.SmoothDamp's own internal velocity state for smoothedX/Y.</summary>
-        private float dampVelocityX;
-        private float dampVelocityY;
+        private readonly RotationInertia inertia = new RotationInertia();
 
         /// <summary>
         /// The quadrant's accumulated rotation before the zero-position deadzone is applied.
@@ -96,7 +73,7 @@ namespace DeftHands.Runtime
         {
             currentItem = item;
             isCurrentItemRotatable = item != null && !PickupableItemUtils.HasCustomOnScroll(item);
-            ResetWeightState();
+            inertia.Reset();
 
             float offset = item != null ? item.heldRotationOffset : 0f;
             quadrantRawOffset = offset;
@@ -107,7 +84,7 @@ namespace DeftHands.Runtime
         {
             if (!IsRotating)
             {
-                ResetWeightState();
+                inertia.Reset();
                 WallAttachmentRoll.RecenterDeadzone();
                 return;
             }
@@ -120,50 +97,12 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Returns this frame's mouse movement, smoothed according to the held item's weight
-        /// when rotation inertia is enabled. Smoothing keeps decaying after the mouse stops.
+        /// Returns this frame's mouse movement, smoothed according to the held item's weight when rotation inertia is
+        /// enabled.
         /// </summary>
         private Vector2 ReadMouseInput()
         {
-            float mouseX = Input.GetAxis("Mouse X");
-            float mouseY = Input.GetAxis("Mouse Y");
-
-            if (!ModConfig.RotationInertiaEnabled.Value)
-            {
-                ResetWeightState();
-                return new Vector2(mouseX, mouseY);
-            }
-
-            float smoothTime = GetHeaviness() * GetPresetSmoothTime();
-            smoothedX = Mathf.SmoothDamp(smoothedX, mouseX, ref dampVelocityX, smoothTime);
-            smoothedY = Mathf.SmoothDamp(smoothedY, mouseY, ref dampVelocityY, smoothTime);
-            return new Vector2(smoothedX, smoothedY);
-        }
-
-        private void ResetWeightState()
-        {
-            smoothedX = 0f;
-            smoothedY = 0f;
-            dampVelocityX = 0f;
-            dampVelocityY = 0f;
-        }
-
-        private static float GetPresetSmoothTime()
-        {
-            return ModConfig.WeightPreset.Value == RotationWeightPreset.Light ? LightSmoothTime : StandardSmoothTime;
-        }
-
-        /// <summary>
-        /// Returns how heavy the held item feels, from 0 (no smoothing) to 1 (full preset
-        /// strength). Items that aren't a ShipItem are treated as weightless.
-        /// </summary>
-        private float GetHeaviness()
-        {
-            if (!(currentItem is ShipItem shipItem))
-                return 0f;
-
-            float t = Mathf.InverseLerp(WeightEffectThreshold, WeightEffectCap, shipItem.mass);
-            return Mathf.Pow(t, WeightCurvePower);
+            return inertia.Apply(new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")), currentItem);
         }
 
         /// <summary>
@@ -178,80 +117,22 @@ namespace DeftHands.Runtime
 
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
-            float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
-            bool turnsInsteadOfRolling = TurnsInsteadOfRolls();
+            float tiltInput = ModInput.ApplyInversion(verticalInput, ModConfig.InvertVertical);
+            bool turnsInsteadOfRolling = ModInput.TurnsInsteadOfRolls();
 
             if (WallAttachmentRoll.IsActive && !currentItem.big)
-                WallAttachmentRoll.AddRollInput(-ApplyInversion(horizontalInput, ModConfig.InvertRoll) * singleAxisSensitivity);
+            {
+                float roll = -ModInput.ApplyInversion(horizontalInput, ModConfig.InvertRoll);
+                WallAttachmentRoll.AddRollInput(roll * singleAxisSensitivity);
+            }
 
             if (currentItem.big)
-                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, turnsInsteadOfRolling);
+                BigItemRotation.Rotate(
+                    currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, turnsInsteadOfRolling);
             else if (currentItem is ShipItemQuadrant)
                 RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
                 currentItem.heldRotationOffset += tiltInput * singleAxisSensitivity;
-        }
-
-        /// <summary>
-        /// Returns whether horizontal movement currently turns big items around the camera's up axis
-        /// instead of rolling them: Switch Turn/Roll Axes, flipped while the axis swap key is
-        /// held.
-        /// </summary>
-        private static bool TurnsInsteadOfRolls()
-        {
-            return ModConfig.SwitchTurnRollAxes.Value ^ ModInput.IsAxisSwapKeyHeld();
-        }
-
-        /// <summary>
-        /// Rotates a big item freely relative to the camera. Vertical movement pitches around
-        /// the camera's right axis; horizontal movement rolls around its forward axis, or turns
-        /// around its up axis on the alternative axis. Wall-attachable items pause at upright
-        /// while rolling through it.
-        /// </summary>
-        /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
-        /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
-        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity, bool turnsInsteadOfRolling)
-        {
-            Transform camera = mainCamera.transform;
-
-            if (turnsInsteadOfRolling)
-                item.transform.Rotate(camera.up, ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
-            else
-                RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);
-
-            item.transform.Rotate(camera.right, tiltInput * sensitivity, Space.World);
-
-            if (WallAttachmentRoll.IsActive)
-                WallAttachmentRoll.HoldBigItemUpright(item.transform);
-
-            StoreBigItemRotation(item);
-        }
-
-        private static void RollBigItem(PickupableItem item, Vector3 axis, float degrees)
-        {
-            if (WallAttachmentRoll.IsActive)
-                WallAttachmentRoll.RollBigItem(item.transform, axis, degrees);
-            else
-                item.transform.Rotate(axis, degrees, Space.World);
-        }
-
-        private static float ApplyInversion(float input, ConfigEntry<bool> invert)
-        {
-            return invert.Value ? -input : input;
-        }
-
-        /// <summary>
-        /// Stores the item's current rotation as the holding GoPointer's bigItemLocalRot, so it
-        /// persists on following frames, and resets the item's heldRotationOffset.
-        /// </summary>
-        private static void StoreBigItemRotation(PickupableItem item)
-        {
-            if (BigItemLocalRotField == null)
-                return;
-
-            Quaternion holderRotation = item.held.transform.rotation;
-            BigItemLocalRotField.SetValue(item.held, Quaternion.Inverse(holderRotation) * item.transform.rotation);
-            item.heldRotationOffset = 0f;
         }
 
         /// <summary>

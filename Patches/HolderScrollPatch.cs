@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -54,11 +56,22 @@ namespace DeftHands.Patches
             if (input == 0f)
                 return input;
 
-            if (!HeldItemScroll.LetsHolderReadScroll(heldItem, input))
-                return 0f;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return input;
 
-            ExtendedHold.GetInstance().NoteActivity(heldItem);
-            return input;
+            try
+            {
+                if (!HeldItemScroll.LetsHolderReadScroll(heldItem, input))
+                    return 0f;
+
+                ExtendedHold.GetInstance().NoteActivity(heldItem);
+                return input;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return input;
+            }
         }
     }
 }

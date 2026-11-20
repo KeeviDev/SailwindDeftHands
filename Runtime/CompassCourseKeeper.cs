@@ -1,4 +1,6 @@
+using DeftHands.Configuration;
 using DeftHands.Utils;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -22,7 +24,14 @@ namespace DeftHands.Runtime
 
         private void LateUpdate()
         {
-            CompassAlignment.KeepCourseInUsualHold();
+            try
+            {
+                CompassAlignment.KeepCourseInUsualHold();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.CompassCourseAlignment, error);
+            }
         }
     }
 }

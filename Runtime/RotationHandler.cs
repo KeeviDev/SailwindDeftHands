@@ -1,5 +1,6 @@
 using DeftHands.Configuration;
 using DeftHands.Utils;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -89,6 +90,15 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Stops the handler's updates, so that the held item no longer turns with the mouse.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance != null)
+                instance.enabled = false;
+        }
+
+        /// <summary>
         /// Registers the currently held item and resets per-item rotation state.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
@@ -99,6 +109,22 @@ namespace DeftHands.Runtime
         }
 
         private void Update()
+        {
+            try
+            {
+                ResetOrRotate();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        /// <summary>
+        /// Resets the held item's orientation when the reset key is pressed, and turns the item by this frame's mouse
+        /// movement while <see cref="IsRotating"/>.
+        /// </summary>
+        private void ResetOrRotate()
         {
             if (ModInput.IsResetOrientationPressed()
                 && (IsHoldingRotatableItem || CompassAlignment.IsLockedToCourse(currentItem)))

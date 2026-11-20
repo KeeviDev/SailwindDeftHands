@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 
 namespace DeftHands.Patches
 {
@@ -11,7 +13,17 @@ namespace DeftHands.Patches
     {
         private static void Postfix(GoPointerTargeter __instance)
         {
-            PreviewTopArrow.Follow(__instance);
+            if (!FeatureGuard.IsRunning(ModConfig.WallAttachmentTopArrow))
+                return;
+
+            try
+            {
+                PreviewTopArrow.Follow(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.WallAttachmentTopArrow, error);
+            }
         }
     }
 }

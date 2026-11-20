@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 
 namespace DeftHands.Patches
 {
@@ -12,8 +14,36 @@ namespace DeftHands.Patches
     {
         public static void Prefix(GoPointer __instance)
         {
-            if (!CompassAlignment.KeepCourse(__instance))
+            if (KeepsCourse(__instance))
+                return;
+
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
                 BigItemFacing.KeepFacing(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        private static bool KeepsCourse(GoPointer holder)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.CompassCourseAlignment))
+                return false;
+
+            try
+            {
+                return CompassAlignment.KeepCourse(holder);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.CompassCourseAlignment, error);
+                return false;
+            }
         }
     }
 }

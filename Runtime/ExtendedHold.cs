@@ -1,5 +1,6 @@
 using DeftHands.Configuration;
 using DeftHands.Utils;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -61,9 +62,28 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Gets whether small items can be held like big items: Extended Small Items Rotation is on.
+        /// Gets whether small items can be held like big items: Extended Small Items Rotation is on and runs.
         /// </summary>
-        public static bool IsEnabled => ModConfig.ExtendedSmallItemsRotation.Value;
+        public static bool IsEnabled => FeatureGuard.IsOn(ModConfig.ExtendedSmallItemsRotation);
+
+        /// <summary>
+        /// Stops the holder's updates and ends holding the current item like a big item: it eases back into the hand,
+        /// or is put down as let go when nothing holds it any more.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance == null)
+                return;
+
+            instance.enabled = false;
+            if (!instance.isExtended)
+                return;
+
+            if (instance.currentItem != null && instance.currentItem.held != null)
+                instance.EaseBackIntoHand();
+            else
+                instance.PutDown();
+        }
 
         /// <summary>
         /// Returns whether the held small <paramref name="item"/> can be held like a big item: <see cref="IsEnabled"/>,
@@ -166,6 +186,22 @@ namespace DeftHands.Runtime
 
         private void Update()
         {
+            try
+            {
+                KeepOrEndHold();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
+            }
+        }
+
+        /// <summary>
+        /// Ends holding the item like a big item once it is let go, can no longer be held that way, or was left alone
+        /// for <see cref="IdleTime"/> seconds.
+        /// </summary>
+        private void KeepOrEndHold()
+        {
             if (!isExtended)
                 return;
 
@@ -200,11 +236,13 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether the held <paramref name="item"/> is aimed at a table or other surface for items while Neat
-        /// Item Placement is off, so the game shows it there as soon as it is held as a small item.
+        /// Item Placement is off or turned off by errors, so the game shows it there as soon as it is held as a small
+        /// item.
         /// </summary>
         private static bool IsAimedAtFurnitureWithoutNeatPlacement(PickupableItem item)
         {
-            return !ModConfig.NeatItemPlacement.Value && SurfaceAim.IsAimedAtSurfaceForItems(item as ShipItem);
+            return !FeatureGuard.IsOn(ModConfig.NeatItemPlacement)
+                && SurfaceAim.IsAimedAtSurfaceForItems(item as ShipItem);
         }
 
         private void RestartIdleTime()
@@ -214,8 +252,15 @@ namespace DeftHands.Runtime
 
         private void LateUpdate()
         {
-            if (isExtended && currentItem != null && placedFrame == Time.frameCount)
-                currentItem.transform.rotation = placedRotation;
+            try
+            {
+                if (isExtended && currentItem != null && placedFrame == Time.frameCount)
+                    currentItem.transform.rotation = placedRotation;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
+            }
         }
 
         /// <summary>

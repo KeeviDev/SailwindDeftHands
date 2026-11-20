@@ -108,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
+    <Compile Include="Configuration\FeatureGuard.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\ModInput.cs" />
     <Compile Include="Configuration\PushPullMode.cs" />

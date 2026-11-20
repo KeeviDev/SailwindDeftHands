@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
@@ -13,7 +15,18 @@ namespace DeftHands.Patches
     {
         public static bool Prefix()
         {
-            return !RotationHandler.GetInstance().IsRotating;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return true;
+
+            try
+            {
+                return !RotationHandler.GetInstance().IsRotating;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return true;
+            }
         }
     }
 
@@ -55,7 +68,18 @@ namespace DeftHands.Patches
 
         private static bool MaskRotateHCheck(bool original)
         {
-            return GameRotation.KeepsRotateKey && original;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return original;
+
+            try
+            {
+                return GameRotation.KeepsRotateKey && original;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return original;
+            }
         }
     }
 }

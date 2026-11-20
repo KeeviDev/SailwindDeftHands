@@ -1,4 +1,6 @@
+using DeftHands.Configuration;
 using DeftHands.Utils;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -127,6 +129,18 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Stops the handler's updates and drops any push or pull still easing the held item.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance == null)
+                return;
+
+            instance.enabled = false;
+            instance.ResetSmoothing();
+        }
+
+        /// <summary>
         /// Returns whether push and pull move the held <paramref name="item"/>: it is on no surface for items, neither
         /// placed there by <see cref="FurniturePlacement.IsPlacing"/> nor shown there by the game
         /// (<see cref="FurniturePlacement.IsShownByGame"/>).
@@ -149,11 +163,23 @@ namespace DeftHands.Runtime
             requestedOffset += delta;
         }
 
-        /// <summary>
-        /// Applies this frame's share of the queued movement. Discards whatever remains once a
-        /// distance limit is reached or <see cref="CanMove"/> turns false.
-        /// </summary>
         private void Update()
+        {
+            try
+            {
+                EaseHeldItem();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        /// <summary>
+        /// Applies this frame's share of the queued movement. Discards whatever remains once a distance limit is
+        /// reached or <see cref="CanMove"/> turns false.
+        /// </summary>
+        private void EaseHeldItem()
         {
             if (currentItem == null || currentItem.held == null)
             {

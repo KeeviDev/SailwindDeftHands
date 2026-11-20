@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Patches
@@ -13,8 +15,18 @@ namespace DeftHands.Patches
     {
         public static void Postfix(PickupableItemCollisionChecker __instance, ref Vector3 __result)
         {
-            if (PushPullHandler.GetInstance().UpdatePushOutOverride(__instance, __result))
-                __result = Vector3.zero;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                if (PushPullHandler.GetInstance().UpdatePushOutOverride(__instance, __result))
+                    __result = Vector3.zero;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 }

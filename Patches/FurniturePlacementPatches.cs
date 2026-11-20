@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -14,7 +16,17 @@ namespace DeftHands.Patches
     {
         public static void Postfix(GoPointer __instance)
         {
-            SurfaceAim.Record(__instance);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                SurfaceAim.Record(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 
@@ -28,7 +40,17 @@ namespace DeftHands.Patches
         [HarmonyPriority(Priority.Low)]
         private static void Postfix()
         {
-            FurniturePlacement.GetInstance().PlaceHeldItem();
+            if (!FeatureGuard.IsRunning(ModConfig.NeatItemPlacement))
+                return;
+
+            try
+            {
+                FurniturePlacement.GetInstance().PlaceHeldItem();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.NeatItemPlacement, error);
+            }
         }
     }
 
@@ -72,7 +94,23 @@ namespace DeftHands.Patches
         /// </summary>
         private static bool ClickWithItem(GoPointerButton button, PickupableItem heldItem)
         {
-            return button.OnItemClick(heldItem) && FurniturePlacement.GetInstance().TryPlace(heldItem);
+            return button.OnItemClick(heldItem) && TryPlace(heldItem);
+        }
+
+        private static bool TryPlace(PickupableItem heldItem)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.NeatItemPlacement))
+                return true;
+
+            try
+            {
+                return FurniturePlacement.GetInstance().TryPlace(heldItem);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.NeatItemPlacement, error);
+                return true;
+            }
         }
     }
 }

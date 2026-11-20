@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Patches
@@ -18,9 +20,19 @@ namespace DeftHands.Patches
         [HarmonyPatch(typeof(LookUI), nameof(LookUI.ShowHoldText))]
         private static void AfterShowHoldText(LookUI __instance, PickupableItem item, TextMesh ___controlsText)
         {
-            HungPickupHint.Hide(__instance);
-            CompassCourseHint.AddToHoldText(__instance, ___controlsText, item);
-            RotationControlsHint.AddTo(___controlsText, item);
+            if (!FeatureGuard.IsRunning(FeatureGuard.ControlsHints))
+                return;
+
+            try
+            {
+                HungPickupHint.Hide(__instance);
+                CompassCourseHint.AddToHoldText(__instance, ___controlsText, item);
+                RotationControlsHint.AddTo(___controlsText, item);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.ControlsHints, error);
+            }
         }
 
         /// <summary>
@@ -35,10 +47,20 @@ namespace DeftHands.Patches
             TextMesh ___controlsText,
             GoPointer ___pointer)
         {
-            CompassCourseHint.AddToLookText(__instance, ___controlsText, button);
-            HungPickupHint.AddToLookText(__instance, ___controlsText, ___pointer, button);
-            if (___pointer != null)
-                RotationControlsHint.AddOnSurfaceTo(___controlsText, ___pointer.GetHeldItem());
+            if (!FeatureGuard.IsRunning(FeatureGuard.ControlsHints))
+                return;
+
+            try
+            {
+                CompassCourseHint.AddToLookText(__instance, ___controlsText, button);
+                HungPickupHint.AddToLookText(__instance, ___controlsText, ___pointer, button);
+                if (___pointer != null)
+                    RotationControlsHint.AddOnSurfaceTo(___controlsText, ___pointer.GetHeldItem());
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.ControlsHints, error);
+            }
         }
 
         /// <summary>
@@ -48,7 +70,17 @@ namespace DeftHands.Patches
         [HarmonyPatch(typeof(LookUI), "HideIcons")]
         private static void AfterHideIcons(LookUI __instance)
         {
-            HungPickupHint.Hide(__instance);
+            if (!FeatureGuard.IsRunning(FeatureGuard.ControlsHints))
+                return;
+
+            try
+            {
+                HungPickupHint.Hide(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.ControlsHints, error);
+            }
         }
     }
 }

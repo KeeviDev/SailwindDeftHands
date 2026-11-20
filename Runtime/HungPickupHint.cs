@@ -85,11 +85,20 @@ namespace DeftHands.Runtime
         /// </summary>
         public static void Hide(LookUI lookUI)
         {
-            if (lookUI != copiesOwner || keyTextCopy == null || modifierText == null)
-                return;
+            if (lookUI == copiesOwner)
+                HideKeys();
+        }
 
-            keyTextCopy.gameObject.SetActive(false);
-            modifierText.gameObject.SetActive(false);
+        /// <summary>
+        /// Hides the keys of the line for picking an item up as it hangs.
+        /// </summary>
+        public static void HideKeys()
+        {
+            if (keyTextCopy != null)
+                keyTextCopy.gameObject.SetActive(false);
+
+            if (modifierText != null)
+                modifierText.gameObject.SetActive(false);
         }
 
         /// <summary>

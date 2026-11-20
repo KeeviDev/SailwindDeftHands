@@ -23,10 +23,10 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Gets whether held wall-attachable items turn on the surface they will attach to rather than in the hand:
-        /// Easy Wall Hanging is on, with Wall Attachment Rotation, Tilt or Depth.
+        /// Easy Wall Hanging is on and runs, with Wall Attachment Rotation, Tilt or Depth.
         /// </summary>
         public static bool TurnsItemsOnWall =>
-            ModConfig.EasyWallHanging.Value
+            FeatureGuard.IsOn(ModConfig.EasyWallHanging)
             && (ModConfig.WallAttachmentRotationEnabled.Value
                 || ModConfig.WallAttachmentTilt.Value
                 || ModConfig.WallAttachmentDepth.Value);

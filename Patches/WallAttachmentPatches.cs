@@ -1,3 +1,4 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
 using System;
@@ -40,20 +41,36 @@ namespace DeftHands.Patches
             ref Vector3 ___attachPos,
             ref Quaternion ___attachRot)
         {
-            bool aimsHook = WallAttachmentRoll.AimsHook(__instance) && ___itemRigidbody != null;
-            if (aimsHook)
-                FindAttachment(__instance, ___itemRigidbody, ref ___inRangeOfWall, ref ___attachPos, ref ___attachRot);
-
-            if (!___inRangeOfWall)
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
                 return;
 
-            Vector3 intoSurface = ___attachRot * Vector3.forward;
-            bool isTurned = WallAttachmentAdjustment.TryOrientAttachment(__instance, ref ___attachRot)
-                || WallAttachmentRoll.TryRollAttachment(__instance, ___attachPos, ref ___attachRot);
-            bool isDeepened = WallAttachmentAdjustment.TryDeepenAttachment(__instance, intoSurface, ref ___attachPos);
+            try
+            {
+                AdjustAttachment(
+                    __instance, ___itemRigidbody, ref ___inRangeOfWall, ref ___attachPos, ref ___attachRot);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        private static void AdjustAttachment(
+            ShipItem item, Transform body, ref bool inRangeOfWall, ref Vector3 attachPos, ref Quaternion attachRot)
+        {
+            bool aimsHook = WallAttachmentRoll.AimsHook(item) && body != null;
+            if (aimsHook)
+                FindAttachment(item, body, ref inRangeOfWall, ref attachPos, ref attachRot);
+
+            if (!inRangeOfWall)
+                return;
+
+            Vector3 intoSurface = attachRot * Vector3.forward;
+            bool isTurned = WallAttachmentAdjustment.TryOrientAttachment(item, ref attachRot)
+                || WallAttachmentRoll.TryRollAttachment(item, attachPos, ref attachRot);
+            bool isDeepened = WallAttachmentAdjustment.TryDeepenAttachment(item, intoSurface, ref attachPos);
             if (aimsHook || isTurned || isDeepened)
-                SetUpTargeter?.Invoke(
-                    __instance, ___attachPos, ___attachRot, __instance.GetComponent<MeshFilter>().sharedMesh);
+                SetUpTargeter?.Invoke(item, attachPos, attachRot, item.GetComponent<MeshFilter>().sharedMesh);
         }
 
         /// <summary>
@@ -97,14 +114,34 @@ namespace DeftHands.Patches
     {
         public static void Prefix(GoPointer __instance)
         {
-            WallAttachmentRoll.UnrollHeldItem(__instance.GetHeldItem());
-            if (GameInput.GetKey(InputName.RotateH))
-                WallAttachmentRoll.TakeHookTurn();
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                WallAttachmentRoll.UnrollHeldItem(__instance.GetHeldItem());
+                if (GameInput.GetKey(InputName.RotateH))
+                    WallAttachmentRoll.TakeHookTurn();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
 
         public static void Postfix(GoPointer __instance)
         {
-            WallAttachmentRoll.RollHeldItem(__instance.GetHeldItem());
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                WallAttachmentRoll.RollHeldItem(__instance.GetHeldItem());
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 }

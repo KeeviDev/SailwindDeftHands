@@ -181,7 +181,8 @@ namespace DeftHands.Runtime
                 lines.Add(NameOf(modifierKey) + " roll");
 
             KeyCode swapKey = ModConfig.AxisSwapKey.Value.MainKey;
-            if (ModConfig.EasyWallHanging.Value && ModConfig.WallAttachmentTilt.Value && swapKey != KeyCode.None)
+            if (FeatureGuard.IsOn(ModConfig.EasyWallHanging) && ModConfig.WallAttachmentTilt.Value
+                && swapKey != KeyCode.None)
                 lines.Add(NameOf(modifierKey) + " + " + NameOf(swapKey) + " tilt");
 
             if (ModConfig.WallAttachmentDepth.Value)

@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 
 namespace DeftHands.Patches
 {
@@ -28,11 +30,56 @@ namespace DeftHands.Patches
             if (takesHungPose)
                 HungItemPose.TakeOff(item as ShipItem);
 
-            HeldItemAside.GetInstance().SetCurrentItem(item);
+            TrackInHeldItemAside(item);
             HeldItemVisibility.SetCurrentItem(item);
-            ExtendedHold.GetInstance().SetCurrentItem(item);
-            FurniturePlacement.GetInstance().SetCurrentItem(item, wasHung);
+            TrackInExtendedHold(item);
+            TrackInFurniturePlacement(item, wasHung);
             ModifierPickupClickPatch.SetCurrentItem(item);
+        }
+
+        private static void TrackInHeldItemAside(PickupableItem item)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.EasyWallHanging))
+                return;
+
+            try
+            {
+                HeldItemAside.GetInstance().SetCurrentItem(item);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.EasyWallHanging, error);
+            }
+        }
+
+        private static void TrackInExtendedHold(PickupableItem item)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.ExtendedSmallItemsRotation))
+                return;
+
+            try
+            {
+                ExtendedHold.GetInstance().SetCurrentItem(item);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
+            }
+        }
+
+        private static void TrackInFurniturePlacement(PickupableItem item, bool wasHung)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.NeatItemPlacement))
+                return;
+
+            try
+            {
+                FurniturePlacement.GetInstance().SetCurrentItem(item, wasHung);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.NeatItemPlacement, error);
+            }
         }
     }
 
@@ -42,15 +89,36 @@ namespace DeftHands.Patches
         /// <summary>Records whether the item hangs on a surface before pickup detaches it.</summary>
         public static void Prefix(PickupableItem item, out bool __state)
         {
-            ItemRigidbody body = item is ShipItem shipItem ? shipItem.GetItemRigidbody() : null;
-            __state = body != null && HungItemPose.IsHanging(body);
+            __state = false;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                ItemRigidbody body = item is ShipItem shipItem ? shipItem.GetItemRigidbody() : null;
+                __state = body != null && HungItemPose.IsHanging(body);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
 
         /// <summary>Starts tracking the item if the pointer now holds it.</summary>
         public static void Postfix(GoPointer __instance, PickupableItem item, bool __state)
         {
-            if (item != null && __instance.GetHeldItem() == item)
-                HeldItemTracker.SetCurrentItem(item, __state);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                if (item != null && __instance.GetHeldItem() == item)
+                    HeldItemTracker.SetCurrentItem(item, __state);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 
@@ -60,7 +128,7 @@ namespace DeftHands.Patches
         /// <summary>Records the item about to be let go.</summary>
         public static void Prefix(GoPointer __instance, out ShipItem __state)
         {
-            __state = __instance.GetHeldItem() as ShipItem;
+            __state = FeatureGuard.IsRunning(FeatureGuard.Core) ? __instance.GetHeldItem() as ShipItem : null;
         }
 
         /// <summary>
@@ -70,14 +138,39 @@ namespace DeftHands.Patches
         /// </summary>
         public static void Postfix(GoPointer __instance, ShipItem __state)
         {
-            FurniturePlacement.GetInstance().PutDownPlacedItem();
-            if (__instance.GetHeldItem() != null)
+            PutDownPlacedItem();
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
                 return;
 
-            if (__state != null && __state.held == null)
-                HungItemPose.Remember(__state);
+            try
+            {
+                if (__instance.GetHeldItem() != null)
+                    return;
 
-            HeldItemTracker.SetCurrentItem(null, false);
+                if (__state != null && __state.held == null)
+                    HungItemPose.Remember(__state);
+
+                HeldItemTracker.SetCurrentItem(null, false);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        private static void PutDownPlacedItem()
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.NeatItemPlacement))
+                return;
+
+            try
+            {
+                FurniturePlacement.GetInstance().PutDownPlacedItem();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.NeatItemPlacement, error);
+            }
         }
     }
 }

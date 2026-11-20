@@ -1,5 +1,6 @@
 using DeftHands.Configuration;
 using DeftHands.Utils;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -111,6 +112,15 @@ namespace DeftHands.Runtime
             areRidersFound = false;
         }
 
+        /// <summary>
+        /// Stops drawing the held item aside and gives it, with the items riding in its box, its real pose back.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance != null)
+                instance.enabled = false;
+        }
+
         private void OnEnable()
         {
             Camera.onPreCull += DrawAside;
@@ -126,6 +136,22 @@ namespace DeftHands.Runtime
 
         private void Update()
         {
+            try
+            {
+                UpdateBlend();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.EasyWallHanging, error);
+            }
+        }
+
+        /// <summary>
+        /// Gives the item its real pose back for the frame's own code and moves <see cref="blend"/> towards fully aside
+        /// while it shows where it will attach, or back to the hand otherwise.
+        /// </summary>
+        private void UpdateBlend()
+        {
             RestoreRealPose();
             blend = SurfaceAim.IsAimedAtSurfaceForItems(currentItem) || GameInput.GetKey(InputName.Throw)
                 ? 0f
@@ -140,7 +166,7 @@ namespace DeftHands.Runtime
 
         private bool ShowsPreview()
         {
-            return ModConfig.EasyWallHanging.Value && WallPlacement.ShowsPreview(currentItem);
+            return FeatureGuard.IsOn(ModConfig.EasyWallHanging) && WallPlacement.ShowsPreview(currentItem);
         }
 
         /// <summary>
@@ -217,13 +243,25 @@ namespace DeftHands.Runtime
             return matrix;
         }
 
+        private void DrawAside(Camera camera)
+        {
+            try
+            {
+                MoveAsideFor(camera);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.EasyWallHanging, error);
+            }
+        }
+
         /// <summary>
         /// Moves the held item, with the items riding in its box, for the main camera, as far as <see cref="blend"/>
         /// has come, so that in its resting pose its upper left corner would sit below and right of the preview on the
         /// holder's line of sight. While <see cref="WallPlacement.TurnsOnWall"/>, it also turns the item to face the
         /// player at its preview's roll, and the resting pose faces the player without that roll.
         /// </summary>
-        private void DrawAside(Camera camera)
+        private void MoveAsideFor(Camera camera)
         {
             if (blend <= 0f || isDrawnAside || !camera.CompareTag("MainCamera") || currentItem == null
                 || currentItem.held == null)
@@ -326,8 +364,15 @@ namespace DeftHands.Runtime
 
         private void RestoreAfterRender(Camera camera)
         {
-            if (isDrawnAside && camera == drawingCamera)
-                RestoreRealPose();
+            try
+            {
+                if (isDrawnAside && camera == drawingCamera)
+                    RestoreRealPose();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.EasyWallHanging, error);
+            }
         }
 
         private void RestoreRealPose()

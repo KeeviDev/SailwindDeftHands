@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -9,7 +11,8 @@ namespace DeftHands.Patches
 {
     /// <summary>
     /// Makes ShipItem.Update find where a held wall-attachable item attaches through
-    /// <see cref="WallAttachmentAim.Raycast"/>.
+    /// <see cref="WallAttachmentAim.Raycast"/>, or through the game's own raycast once errors turned Easy Wall Hanging
+    /// off.
     /// </summary>
     [HarmonyPatch(typeof(ShipItem), "Update")]
     public static class WallAttachmentAimPatch
@@ -21,7 +24,7 @@ namespace DeftHands.Patches
                 typeof(Physics),
                 nameof(Physics.Raycast),
                 new[] { typeof(Ray), typeof(RaycastHit).MakeByRefType(), typeof(float) });
-            MethodInfo aimRaycast = AccessTools.Method(typeof(WallAttachmentAim), nameof(WallAttachmentAim.Raycast));
+            MethodInfo aimRaycast = AccessTools.Method(typeof(WallAttachmentAimPatch), nameof(Raycast));
             var codes = new List<CodeInstruction>(instructions);
 
             int index = codes.FindIndex(code => code.Calls(vanillaRaycast));
@@ -37,6 +40,23 @@ namespace DeftHands.Patches
             codes[index] = new CodeInstruction(OpCodes.Call, aimRaycast);
             codes.Insert(index, loadItem);
             return codes;
+        }
+
+        private static bool Raycast(Ray itemRay, out RaycastHit hit, float maxDistance, ShipItem item)
+        {
+            if (FeatureGuard.IsRunning(ModConfig.EasyWallHanging))
+            {
+                try
+                {
+                    return WallAttachmentAim.Raycast(itemRay, out hit, maxDistance, item);
+                }
+                catch (Exception error)
+                {
+                    FeatureGuard.ReportError(ModConfig.EasyWallHanging, error);
+                }
+            }
+
+            return Physics.Raycast(itemRay, out hit, maxDistance);
         }
     }
 }

@@ -116,11 +116,11 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether Deft Hands works out where the held <paramref name="item"/> attaches itself: it is a hook
-        /// HooksHangMore turns, and Easy Wall Hanging is on or <see cref="TakesOverHook"/>.
+        /// HooksHangMore turns, and Easy Wall Hanging is on and runs or <see cref="TakesOverHook"/>.
         /// </summary>
         public static bool AimsHook(ShipItem item)
         {
-            return IsTurnedHook(item) && (ModConfig.EasyWallHanging.Value || TakesOverHook(item));
+            return IsTurnedHook(item) && (FeatureGuard.IsOn(ModConfig.EasyWallHanging) || TakesOverHook(item));
         }
 
         /// <summary>

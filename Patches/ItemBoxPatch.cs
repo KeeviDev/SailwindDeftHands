@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 
 namespace DeftHands.Patches
 {
@@ -11,7 +13,17 @@ namespace DeftHands.Patches
     {
         public static void Postfix(ItemRigidbody __instance)
         {
-            ItemBoxRiders.Add(__instance);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                ItemBoxRiders.Add(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 }

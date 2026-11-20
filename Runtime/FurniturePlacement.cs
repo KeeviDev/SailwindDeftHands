@@ -1,6 +1,7 @@
 using DeftHands.Configuration;
 using DeftHands.Utils;
 using HarmonyLib;
+using System;
 using UnityEngine;
 using Outline = cakeslice.Outline;
 
@@ -8,8 +9,8 @@ namespace DeftHands.Runtime
 {
     /// <summary>
     /// Places the held small item on the table or other surface for items it is aimed at while Neat Item Placement is
-    /// on, in a pose the player can turn, and puts it down in that pose. Keeps the item clear of what it would reach
-    /// into, or outlines it red and keeps it in the hand when it can't be cleared.
+    /// on and runs, in a pose the player can turn, and puts it down in that pose. Keeps the item clear of what it would
+    /// reach into, or outlines it red and keeps it in the hand when it can't be cleared.
     /// </summary>
     [DefaultExecutionOrder(10000)]
     public class FurniturePlacement : MonoBehaviour
@@ -122,6 +123,26 @@ namespace DeftHands.Runtime
                 instance = PersistentObject.Create<FurniturePlacement>();
 
             return instance;
+        }
+
+        /// <summary>
+        /// Stops the placement's updates and ends placing the held item on a surface, so that its holder poses it
+        /// again.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance == null)
+                return;
+
+            instance.enabled = false;
+            instance.isPosed = false;
+            instance.placedItem = null;
+            instance.overlaps = false;
+            if (instance.isPlacing)
+            {
+                instance.isPlacing = false;
+                QuadrantInspection.Restore(instance.currentItem);
+            }
         }
 
         /// <summary>
@@ -313,6 +334,22 @@ namespace DeftHands.Runtime
 
         private void LateUpdate()
         {
+            try
+            {
+                ShowPose();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.NeatItemPlacement, error);
+            }
+        }
+
+        /// <summary>
+        /// Puts the item posed on a surface this frame back in its pose there, after its own code moved it, and
+        /// outlines it red while it overlaps what it would reach into.
+        /// </summary>
+        private void ShowPose()
+        {
             if (!isPosed || currentItem == null)
                 return;
 
@@ -325,7 +362,7 @@ namespace DeftHands.Runtime
 
         private bool CanPlace(PickupableItem item)
         {
-            return ModConfig.NeatItemPlacement.Value
+            return FeatureGuard.IsOn(ModConfig.NeatItemPlacement)
                 && item != null
                 && item == currentItem
                 && currentShape != null

@@ -30,6 +30,7 @@ namespace DeftHands
             try
             {
                 ModConfig.Bind(Config);
+                RegisterUndos();
                 RotationControlsHint.WatchSettings(Config);
                 LogSettings();
                 ApplyHarmonyPatches();
@@ -53,12 +54,41 @@ namespace DeftHands
         }
 
         /// <summary>
-        /// Applies every Harmony patch in this assembly.
+        /// Registers with <see cref="FeatureGuard"/> what each part of Deft Hands puts back when it stops.
+        /// </summary>
+        private static void RegisterUndos()
+        {
+            FeatureGuard.OnStop(ModConfig.ExtendedSmallItemsRotation, ExtendedHold.Disable);
+            FeatureGuard.OnStop(ModConfig.NeatItemPlacement, FurniturePlacement.Disable);
+            FeatureGuard.OnStop(ModConfig.CompassCourseAlignment, CompassAlignment.UnlockCourse);
+            FeatureGuard.OnStop(ModConfig.EasyWallHanging, HeldItemAside.Disable);
+            FeatureGuard.OnStop(ModConfig.WallAttachmentTopArrow, PreviewTopArrow.HideArrows);
+            FeatureGuard.OnStop(FeatureGuard.ControlsHints, HungPickupHint.HideKeys);
+            FeatureGuard.OnStop(FeatureGuard.Core, RotationHandler.Disable);
+            FeatureGuard.OnStop(FeatureGuard.Core, PushPullHandler.Disable);
+        }
+
+        /// <summary>
+        /// Applies every Harmony patch class in this assembly, logs each class that fails to apply, and logs each
+        /// patched method.
         /// </summary>
         private static void ApplyHarmonyPatches()
         {
             var harmony = new Harmony(PLUGIN_GUID);
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
+            foreach (Type patchClass in AccessTools.GetTypesFromAssembly(Assembly.GetExecutingAssembly()))
+            {
+                try
+                {
+                    harmony.CreateClassProcessor(patchClass).Patch();
+                }
+                catch (Exception ex)
+                {
+                    Log.LogError(string.Format(
+                        "Could not apply the patches in {0} - the game may have updated. The feature may not work: {1}",
+                        patchClass.Name,
+                        ex));
+                }
+            }
 
             foreach (MethodBase method in harmony.GetPatchedMethods())
             {

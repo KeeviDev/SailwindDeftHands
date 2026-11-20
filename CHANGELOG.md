@@ -17,6 +17,7 @@
   - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
 - **Wall attachment top arrow:** while you aim an item at a wall, an arrow beside the preview shows which way its top faces ("Wall attachment top arrow")
 - Controls hints for the mod's features
+- Protection against errors: a feature that keeps running into errors for several seconds turns off until you restart the game, so the rest of the mod and the game keep working
 - "Item Rotation" config section:
   - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
   - Keep rolling level — big items roll around a level axis, even when you look up or down

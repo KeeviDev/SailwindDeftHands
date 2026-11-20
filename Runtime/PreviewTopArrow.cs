@@ -6,8 +6,8 @@ namespace DeftHands.Runtime
 {
     /// <summary>
     /// Shows an arrow beside the preview of where a held item will hang, while
-    /// <see cref="ModConfig.WallAttachmentTopArrow"/> is on, pointing the way the item's top faces and turning with the
-    /// preview.
+    /// <see cref="ModConfig.WallAttachmentTopArrow"/> is on and runs, pointing the way the item's top faces and turning
+    /// with the preview.
     /// </summary>
     internal static class PreviewTopArrow
     {
@@ -31,9 +31,26 @@ namespace DeftHands.Runtime
         private static Mesh arrowMesh;
 
         /// <summary>
+        /// Hides the arrow beside the preview of every placement targeter.
+        /// </summary>
+        public static void HideArrows()
+        {
+            if (GoPointerTargeterFields.Preview == null)
+                return;
+
+            foreach (GoPointerTargeter targeter in Object.FindObjectsOfType<GoPointerTargeter>())
+            {
+                GameObject preview = GoPointerTargeterFields.Preview(targeter);
+                Transform arrow = preview != null ? preview.transform.Find(ArrowName) : null;
+                if (arrow != null)
+                    arrow.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>
         /// Shows the arrow beside the preview of <paramref name="targeter"/> while the preview shows and
-        /// <see cref="ModConfig.WallAttachmentTopArrow"/> is on, and hides it otherwise. Must be called after the
-        /// targeter places its preview for the frame.
+        /// <see cref="ModConfig.WallAttachmentTopArrow"/> is on and runs, and hides it otherwise. Must be called after
+        /// the targeter places its preview for the frame.
         /// </summary>
         public static void Follow(GoPointerTargeter targeter)
         {
@@ -46,7 +63,7 @@ namespace DeftHands.Runtime
             if (preview == null || previewRenderer == null)
                 return;
 
-            bool shows = previewRenderer.enabled && ModConfig.WallAttachmentTopArrow.Value;
+            bool shows = previewRenderer.enabled && FeatureGuard.IsOn(ModConfig.WallAttachmentTopArrow);
             Transform arrow = preview.transform.Find(ArrowName);
             if (arrow == null)
             {

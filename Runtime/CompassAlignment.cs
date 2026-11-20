@@ -26,11 +26,11 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether the held <paramref name="item"/> can be locked to the course: Compass Course Alignment is
-        /// on, it is a compass that draws something, and the player is on a boat.
+        /// on and runs, it is a compass that draws something, and the player is on a boat.
         /// </summary>
         public static bool CanLockToCourse(PickupableItem item)
         {
-            return ModConfig.CompassCourseAlignment.Value
+            return FeatureGuard.IsOn(ModConfig.CompassCourseAlignment)
                 && IsCompass(item)
                 && item.held != null
                 && !HeldItemVisibility.IsHidden(item)
@@ -81,6 +81,15 @@ namespace DeftHands.Runtime
         {
             if (IsLockedToCourse(item))
                 lockedCompass = null;
+        }
+
+        /// <summary>
+        /// Unlocks the compass locked to the course.
+        /// </summary>
+        public static void UnlockCourse()
+        {
+            lockedCompass = null;
+            lockedBoat = null;
         }
 
         /// <summary>
@@ -188,13 +197,13 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Gets the compass <paramref name="button"/> stands for and the physics twin it follows, and returns whether
-        /// it is a compass lying unnailed and loose on a boat while Compass Course Alignment is on.
+        /// it is a compass lying unnailed and loose on a boat while Compass Course Alignment is on and runs.
         /// </summary>
         private static bool TryGetLyingCompass(GoPointerButton button, out ShipItem compass, out ItemRigidbody twin)
         {
             compass = button as ShipItem;
             twin = null;
-            if (!ModConfig.CompassCourseAlignment.Value
+            if (!FeatureGuard.IsOn(ModConfig.CompassCourseAlignment)
                 || compass == null
                 || !IsCompass(compass)
                 || compass.held != null

@@ -3,6 +3,7 @@ using DeftHands.Configuration;
 using DeftHands.Runtime;
 using DeftHands.Utils;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -139,7 +140,18 @@ namespace DeftHands.Patches
     {
         public static bool Prefix(float input, PickupableItem __instance)
         {
-            return HeldItemScroll.LetsItemScroll(__instance, input);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return true;
+
+            try
+            {
+                return HeldItemScroll.LetsItemScroll(__instance, input);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return true;
+            }
         }
     }
 
@@ -180,8 +192,24 @@ namespace DeftHands.Patches
 
         private static void ScrollHeldItem(PickupableItem item, float input)
         {
-            if (!PickupableItemUtils.OverridesOnScroll(item) || HeldItemScroll.LetsItemScroll(item, input))
+            if (LetsHeldItemScroll(item, input))
                 item.OnScroll(input);
+        }
+
+        private static bool LetsHeldItemScroll(PickupableItem item, float input)
+        {
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return true;
+
+            try
+            {
+                return !PickupableItemUtils.OverridesOnScroll(item) || HeldItemScroll.LetsItemScroll(item, input);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return true;
+            }
         }
     }
 }

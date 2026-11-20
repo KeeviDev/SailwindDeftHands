@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Patches
@@ -55,20 +57,74 @@ namespace DeftHands.Patches
         /// </summary>
         public static void Postfix(GoPointer __instance, ref bool __result)
         {
-            __result = AltInteractionBlocker.FilterDown(__result);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                __result = AltInteractionBlocker.FilterDown(__result);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return;
+            }
+
             if (!__result || Time.frameCount == lastHandledFrame)
                 return;
 
             lastHandledFrame = Time.frameCount;
             PickupableItem heldItem = __instance.GetHeldItem();
             if (heldItem == null)
+                AlignCompassLookedAt(__instance);
+            else if (!ToggleCourseLock(heldItem))
+                ReturnToHand(heldItem);
+        }
+
+        private static void AlignCompassLookedAt(GoPointer pointer)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.CompassCourseAlignment))
+                return;
+
+            try
             {
                 if (GoPointerFields.PointedAtButton != null)
-                    CompassAlignment.TryAlignLyingCompass(GoPointerFields.PointedAtButton(__instance));
+                    CompassAlignment.TryAlignLyingCompass(GoPointerFields.PointedAtButton(pointer));
             }
-            else if (!CompassAlignment.TryToggleCourseLock(heldItem))
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.CompassCourseAlignment, error);
+            }
+        }
+
+        private static bool ToggleCourseLock(PickupableItem heldItem)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.CompassCourseAlignment))
+                return false;
+
+            try
+            {
+                return CompassAlignment.TryToggleCourseLock(heldItem);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.CompassCourseAlignment, error);
+                return false;
+            }
+        }
+
+        private static void ReturnToHand(PickupableItem heldItem)
+        {
+            if (!FeatureGuard.IsRunning(ModConfig.ExtendedSmallItemsRotation))
+                return;
+
+            try
             {
                 ExtendedHold.GetInstance().ReturnToHand(heldItem);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
             }
         }
     }
@@ -78,7 +134,17 @@ namespace DeftHands.Patches
     {
         public static void Postfix(ref bool __result)
         {
-            __result = AltInteractionBlocker.FilterHeld(__result);
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return;
+
+            try
+            {
+                __result = AltInteractionBlocker.FilterHeld(__result);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
         }
     }
 }

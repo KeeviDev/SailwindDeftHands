@@ -1,5 +1,7 @@
+using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -18,7 +20,17 @@ namespace DeftHands.Patches
         [HarmonyPriority(Priority.High)]
         private static void Postfix(GoPointer __instance)
         {
-            ExtendedHold.RememberPlacedRotation(__instance);
+            if (!FeatureGuard.IsRunning(ModConfig.ExtendedSmallItemsRotation))
+                return;
+
+            try
+            {
+                ExtendedHold.RememberPlacedRotation(__instance);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
+            }
         }
 
         [HarmonyTranspiler]
@@ -56,7 +68,18 @@ namespace DeftHands.Patches
         /// </summary>
         private static bool IsCarriedLikeBig(PickupableItem item)
         {
-            return ExtendedHold.IsHeldLikeBig(item) && !FurniturePlacement.IsPlacing(item);
+            if (!FeatureGuard.IsRunning(ModConfig.ExtendedSmallItemsRotation))
+                return item.big;
+
+            try
+            {
+                return ExtendedHold.IsHeldLikeBig(item) && !FurniturePlacement.IsPlacing(item);
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(ModConfig.ExtendedSmallItemsRotation, error);
+                return item.big;
+            }
         }
     }
 }

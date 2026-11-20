@@ -179,13 +179,13 @@ namespace DeftHands.Runtime
             float sensitivity = ModConfig.RotationSensitivity.Value;
             float singleAxisSensitivity = sensitivity * SingleAxisSpeedMultiplier;
             float tiltInput = ApplyInversion(verticalInput, ModConfig.InvertVertical);
-            bool useAlternativeAxis = IsAlternativeAxisActive();
+            bool turnsInsteadOfRolling = TurnsInsteadOfRolls();
 
             if (WallAttachmentRoll.IsActive && !currentItem.big)
                 WallAttachmentRoll.AddRollInput(-ApplyInversion(horizontalInput, ModConfig.InvertRoll) * singleAxisSensitivity);
 
             if (currentItem.big)
-                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, useAlternativeAxis);
+                RotateBigItem(currentItem, mainCamera, horizontalInput, tiltInput, sensitivity, turnsInsteadOfRolling);
             else if (currentItem is ShipItemQuadrant)
                 RotateQuadrant(tiltInput * singleAxisSensitivity);
             else
@@ -194,12 +194,12 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Returns whether horizontal movement currently turns big items around the camera's up axis
-        /// instead of rolling them: Alternative Rotation Axis, flipped while the axis swap key is
+        /// instead of rolling them: Switch Turn/Roll Axes, flipped while the axis swap key is
         /// held.
         /// </summary>
-        private static bool IsAlternativeAxisActive()
+        private static bool TurnsInsteadOfRolls()
         {
-            return ModConfig.UseAlternativeRotationAxis.Value ^ ModInput.IsAxisSwapKeyHeld();
+            return ModConfig.SwitchTurnRollAxes.Value ^ ModInput.IsAxisSwapKeyHeld();
         }
 
         /// <summary>
@@ -210,11 +210,11 @@ namespace DeftHands.Runtime
         /// </summary>
         /// <param name="horizontalInput">Raw horizontal input; inverted here per the active axis's setting.</param>
         /// <param name="tiltInput">Vertical input with vertical inversion already applied.</param>
-        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity, bool useAlternativeAxis)
+        private static void RotateBigItem(PickupableItem item, Camera mainCamera, float horizontalInput, float tiltInput, float sensitivity, bool turnsInsteadOfRolling)
         {
             Transform camera = mainCamera.transform;
 
-            if (useAlternativeAxis)
+            if (turnsInsteadOfRolling)
                 item.transform.Rotate(camera.up, ApplyInversion(horizontalInput, ModConfig.InvertTurn) * sensitivity, Space.World);
             else
                 RollBigItem(item, camera.forward, -ApplyInversion(horizontalInput, ModConfig.InvertRoll) * sensitivity);

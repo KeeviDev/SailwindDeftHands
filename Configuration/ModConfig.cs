@@ -8,130 +8,39 @@ namespace DeftHands.Configuration
     /// </summary>
     internal static class ModConfig
     {
-        private const string HeldItemControlSection = "Held Item Control";
+        private const string GeneralFeaturesSection = "General Features";
+        private const string WallAttachmentFeaturesSection = "Wall Attachment Features";
+        private const string ItemRotationSection = "Item Rotation";
+        private const string KeysSection = "Keys";
         private const string AxisInversionSection = "Axis Inversion";
         private const string WeightSimulationSection = "Weight Simulation";
 
         public static ConfigEntry<bool> MouseRotationEnabled { get; private set; }
         public static ConfigEntry<bool> PushPullScrollEnabled { get; private set; }
         public static ConfigEntry<bool> LegacyRotationEnabled { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
-        public static ConfigEntry<float> RotationSensitivity { get; private set; }
-        public static ConfigEntry<bool> UseAlternativeRotationAxis { get; private set; }
-        public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<bool> WallAttachmentRotationEnabled { get; private set; }
+        public static ConfigEntry<float> RotationSensitivity { get; private set; }
+        public static ConfigEntry<bool> SwitchTurnRollAxes { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> RotationModifierKey { get; private set; }
+        public static ConfigEntry<KeyboardShortcut> AxisSwapKey { get; private set; }
         public static ConfigEntry<bool> InvertVertical { get; private set; }
         public static ConfigEntry<bool> InvertRoll { get; private set; }
         public static ConfigEntry<bool> InvertTurn { get; private set; }
         public static ConfigEntry<bool> RotationInertiaEnabled { get; private set; }
         public static ConfigEntry<RotationWeightPreset> WeightPreset { get; private set; }
 
+        /// <summary>
+        /// Binds every setting to <paramref name="config"/>, section by section in the order Configuration Manager shows
+        /// the sections, and keeps Push/Pull on Scroll Wheel on only together with Mouse Rotation Control.
+        /// </summary>
         public static void Bind(ConfigFile config)
         {
-            MouseRotationEnabled = config.Bind(
-                HeldItemControlSection,
-                "Mouse rotation control",
-                true,
-                new ConfigDescription(
-                    "Rotate held items with mouse movement while holding the Rotation Modifier Key below."));
-
-            PushPullScrollEnabled = config.Bind(
-                HeldItemControlSection,
-                "Push/pull on scroll wheel",
-                true,
-                new ConfigDescription(
-                    "Scroll the mouse wheel (without holding a modifier key) to move the held item closer or " +
-                    "farther, instead of rotating it around its main axis."));
-
-            LegacyRotationEnabled = config.Bind(
-                HeldItemControlSection,
-                "Legacy rotation control",
-                true,
-                new ConfigDescription(
-                    "Enable the game's original scroll-wheel rotation (plain scroll, plus the Q axis), and " +
-                    "NANDTweaks' third axis if you have that mod installed. Turn this off to rotate items " +
-                    "with the mouse-drag method only."));
-
-            RotationModifierKey = config.Bind(
-                HeldItemControlSection,
-                "Rotation modifier key",
-                new KeyboardShortcut(KeyCode.LeftAlt),
-                new ConfigDescription(
-                    "The key or mouse button you hold down while moving the mouse to rotate the held item."));
-
-            RotationSensitivity = config.Bind(
-                HeldItemControlSection,
-                "Rotation sensitivity",
-                2.0f,
-                new ConfigDescription(
-                    "How fast items rotate with mouse movement.",
-                    new AcceptableValueRange<float>(0.5f, 10f)));
-
-            UseAlternativeRotationAxis = config.Bind(
-                HeldItemControlSection,
-                "Alternative rotation axis",
-                false,
-                new ConfigDescription(
-                    "Changes which axis left/right mouse movement rotates crates, barrels and other big items " +
-                    "around. By default, it rolls them around the direction you're looking. Turn this on to " +
-                    "instead yaw them around the vertical axis."));
-
-            AxisSwapKey = config.Bind(
-                HeldItemControlSection,
-                "Axis swap key",
-                new KeyboardShortcut(KeyCode.Mouse1),
-                new ConfigDescription(
-                    "While held together with the modifier key, temporarily swaps which axis " +
-                    "left/right mouse movement rotates big items around, overriding Alternative Rotation " +
-                    "Axis for as long as it's held."));
-
-            WallAttachmentRotationEnabled = config.Bind(
-                HeldItemControlSection,
-                "Wall attachment rotation",
-                true,
-                new ConfigDescription(
-                    "Lets you control the angle items are hung on walls, ceilings and floors: " +
-                    "roll a wall-attachable item with the mouse and it attaches at that angle."));
-
-            InvertVertical = config.Bind(
-                AxisInversionSection,
-                "Invert vertical",
-                false,
-                new ConfigDescription(
-                    "Reverses which way up/down mouse movement tilts the held item."));
-
-            InvertRoll = config.Bind(
-                AxisInversionSection,
-                "Invert roll",
-                false,
-                new ConfigDescription(
-                    "Reverses which way left/right mouse movement rolls items."));
-
-            InvertTurn = config.Bind(
-                AxisInversionSection,
-                "Invert turn",
-                false,
-                new ConfigDescription(
-                    "Reverses which way left/right mouse movement turns items around the vertical axis " +
-                    "(Alternative Rotation Axis, or while holding the Axis Swap Key)."));
-
-            RotationInertiaEnabled = config.Bind(
-                WeightSimulationSection,
-                "Rotation inertia",
-                true,
-                new ConfigDescription(
-                    "Makes held items feel like they have weight when you rotate them: heavier items take a " +
-                    "moment to speed up, and keep drifting briefly after you stop moving the mouse. Turn off " +
-                    "for instant, 1:1 mouse response."));
-
-            WeightPreset = config.Bind(
-                WeightSimulationSection,
-                "Weight preset",
-                RotationWeightPreset.Standard,
-                new ConfigDescription(
-                    "How strongly items feel weighted while rotating. Standard is the full effect; Light is " +
-                    "a much subtler version."));
-
+            BindGeneralFeatures(config);
+            BindWallAttachmentFeatures(config);
+            BindItemRotation(config);
+            BindKeys(config);
+            BindAxisInversion(config);
+            BindWeightSimulation(config);
             KeepPushPullDependentOnMouseRotation();
         }
 
@@ -157,6 +66,124 @@ namespace DeftHands.Configuration
         {
             if (!MouseRotationEnabled.Value && PushPullScrollEnabled.Value)
                 PushPullScrollEnabled.Value = false;
+        }
+
+        private static void BindGeneralFeatures(ConfigFile config)
+        {
+            MouseRotationEnabled = config.Bind(
+                GeneralFeaturesSection,
+                "Mouse rotation control",
+                true,
+                new ConfigDescription(
+                    "Hold the modifier key and move the mouse to rotate the held item."));
+
+            PushPullScrollEnabled = config.Bind(
+                GeneralFeaturesSection,
+                "Push/pull on scroll wheel",
+                true,
+                new ConfigDescription(
+                    "Scroll to move the held item closer or farther."));
+
+            LegacyRotationEnabled = config.Bind(
+                GeneralFeaturesSection,
+                "Legacy rotation control",
+                true,
+                new ConfigDescription(
+                    "This checkbox allows you to disable the game's original scroll-wheel rotation (plain scroll, " +
+                    "plus the Q axis) and NANDTweaks' third axis, to rotate items with the mouse-drag method only."));
+        }
+
+        private static void BindWallAttachmentFeatures(ConfigFile config)
+        {
+            WallAttachmentRotationEnabled = config.Bind(
+                WallAttachmentFeaturesSection,
+                "Wall attachment rotation",
+                true,
+                new ConfigDescription(
+                    "Hold the modifier key and move the mouse left or right to roll the item you hang; it hangs on " +
+                    "the wall, ceiling or floor at that angle."));
+        }
+
+        private static void BindItemRotation(ConfigFile config)
+        {
+            RotationSensitivity = config.Bind(
+                ItemRotationSection,
+                "Rotation sensitivity",
+                2.0f,
+                new ConfigDescription(
+                    "How fast items rotate with mouse movement.",
+                    new AcceptableValueRange<float>(0.5f, 10f)));
+
+            SwitchTurnRollAxes = config.Bind(
+                ItemRotationSection,
+                "Switch turn/roll axes",
+                false,
+                new ConfigDescription(
+                    "Left/right mouse movement turns items around the vertical instead of rolling them, and the " +
+                    "other way round while you hold the axis swap key."));
+        }
+
+        private static void BindKeys(ConfigFile config)
+        {
+            RotationModifierKey = config.Bind(
+                KeysSection,
+                "Rotation modifier key",
+                new KeyboardShortcut(KeyCode.LeftAlt),
+                new ConfigDescription(
+                    "The key or mouse button you hold to rotate the held item with the mouse and in the mod's other " +
+                    "key combinations."));
+
+            AxisSwapKey = config.Bind(
+                KeysSection,
+                "Axis swap key",
+                new KeyboardShortcut(KeyCode.Mouse1),
+                new ConfigDescription(
+                    "Hold it together with the modifier key to switch left/right mouse movement between rolling and " +
+                    "turning items."));
+        }
+
+        private static void BindAxisInversion(ConfigFile config)
+        {
+            InvertVertical = config.Bind(
+                AxisInversionSection,
+                "Invert vertical",
+                false,
+                new ConfigDescription(
+                    "Reverses which way up/down mouse movement tilts items."));
+
+            InvertRoll = config.Bind(
+                AxisInversionSection,
+                "Invert roll",
+                false,
+                new ConfigDescription(
+                    "Reverses which way left/right mouse movement rolls items."));
+
+            InvertTurn = config.Bind(
+                AxisInversionSection,
+                "Invert turn",
+                false,
+                new ConfigDescription(
+                    "Reverses which way left/right mouse movement turns the held item around the vertical, with " +
+                    "\"Switch turn/roll axes\" or the axis swap key."));
+        }
+
+        private static void BindWeightSimulation(ConfigFile config)
+        {
+            RotationInertiaEnabled = config.Bind(
+                WeightSimulationSection,
+                "Rotation inertia",
+                true,
+                new ConfigDescription(
+                    "Makes you feel the weight of the held item: heavier items take a moment to get going and drift " +
+                    "to a stop when you rotate them. Turn it off for instant 1:1 response."));
+
+            WeightPreset = config.Bind(
+                WeightSimulationSection,
+                "Weight preset",
+                RotationWeightPreset.Standard,
+                new ConfigDescription(
+                    "How strongly items feel weighted while rotating. Standard is the full effect; Light is " +
+                    "a much subtler version."));
         }
     }
 }

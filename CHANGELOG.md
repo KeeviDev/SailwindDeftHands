@@ -1,5 +1,53 @@
 # Changelog
 
+### Added
+
+- **Extended small items rotation:** turn, push or pull a small item to switch it to the extended state, where it gets full freedom of movement, like big items; it goes back into your hand after a few seconds without turning or moving it, when you use it or press the reset key (can be turned off with the new "Extended small items rotation" option, *needs "Mouse rotation control" enabled*)
+- **Reworked item placement on furniture:** a more precise way to place items on tables, shelves and other furniture, with extended rotation ("Neat item placement")
+- **Compass course alignment:** right-click a compass lying on deck to turn it to the boat's course, or right-click a compass you hold to keep it on the boat's course ("Compass course alignment")
+- **Easy wall hanging:** the item in your hand moves to the lower right of your view so it no longer covers the spot, and items hang exactly at the point where you look ("Easy wall hanging")
+- **Extended wall attachment system:** while you aim an item at a wall, you can turn it on every axis and set its depth to hang it just the way you want
+  - Hold the modifier key and the axis swap key to tilt it at any angle ("Wall attachment tilt" *needs "Easy wall hanging" enabled*)
+  - Scroll with the modifier key to hang it deeper in or farther out ("Wall attachment depth")
+  - The ability to invert the left/right turn with the new "Invert hanging turn" option
+- **New Alt + LMB/F key combination:** hold the modifier key while picking up an item to keep its pose
+  - The ability to pick up small items like big ones: right where they lie, keeping their rotation
+  - The ability to keep the depth and rotation of a hung item, to hang it back the same way or make a correction; items hung in the current session don't need the modifier key held
+- **New MMB hotkey to reset the item state:** the new "Reset orientation key" lets you reset the orientation of the held item, including while placing it on furniture or hanging it on a wall; a small item returns to its vanilla state in your hand
+  - Option "Reset orientation with modifier key" to make the reset key work only while you hold the modifier key
+- **Wall attachment top arrow:** while you aim an item at a wall, an arrow beside the preview shows which way its top faces ("Wall attachment top arrow")
+- Controls hints for the mod's features
+- Protection against errors: a feature that keeps running into errors for several seconds turns off until you restart the game, so the rest of the mod and the game keep working
+- "Item Rotation" config section:
+  - Keep turning level — big items turn around the vertical, or the deck's vertical on a boat, so they stay level
+  - Keep rolling level — big items roll around a level axis, even when you look up or down
+  - Keep tilting level — on a boat, big items tilt around an axis level with the deck
+  - Lock tilt — up/down mouse movement doesn't tilt big items while you hold only the modifier key or also the axis swap key
+- "Item Carrying" config section:
+  - Horizontal stabilization — big items you carry keep facing the same way when you look up or down, in the world or on the deck of your boat
+  - Heading stabilization — big items you carry keep facing the same way when you turn around, in the world or on the deck of your boat
+
+### Changed
+
+- **Reworked item holding system:** by default only horizontal stabilization is on, which keeps the held item facing the same way when you look up or down, in the world or relative to the deck on a boat ("Horizontal stabilization"); keeping its facing when you turn around stays off by default ("Heading stabilization")
+- **New axis orientation for more predictable item rotation:** items now turn, roll and tilt around level axes, following the deck on a boat, instead of depending on your view; turn off the new "Keep turning level", "Keep rolling level" and "Keep tilting level" options for the old behaviour
+- Configuration file is reorganized: the main options now sit in the "General Features" and "Wall Attachment Features" sections; options that moved start from their defaults, so if you changed them, set them again
+- The 180° turn limit of HooksHangMore hooks is lifted when the new wall item rotation is enabled
+- Items that already hung when you loaded the game now keep their hanging offset only when you pick them up with the modifier key held
+- "Mouse rotation control" now affects only items in your hand: items you hang on walls turn with their own options
+- "Legacy rotation control" turned off now blocks the game's own rotation only where mouse rotation is enabled and available, so with "Mouse rotation control" off the game's rotation stays under your control
+- "Push/pull on scroll wheel" is now "Preferred push/pull control" with "Off", "Scroll" and "Scroll With Modifier Key Only" options; "Scroll" also needs the modifier key while mouse rotation is off and legacy rotation is on, so plain scroll is available for vanilla rotation
+- "Alternative rotation axis" is now called "Switch turn/roll axes" and affects only the held item, so hooks, maps and other small wall-attachable items roll with left/right mouse movement however it is set
+- Turning the held item on the alternative axis now goes the other way by default
+- Mouse rotation now starts a moment after you press the modifier key, so the item no longer turns the wrong way when you press the axis swap key just after it
+- The quadrant no longer snaps to zero near level; while it is tilted in your hand, the controls hint shows the key that levels it
+- "Rotation activation key" is now called "Rotation modifier key"; if you changed it, set it again
+
+### Fixed
+
+- Holding the modifier key with a compass, spyglass, fishing rod or another item that uses the scroll wheel no longer freezes the camera
+- Mouse rotation and push/pull no longer stop working on an item that another mod keeps in your hand when you try to drop it, such as a braced Tent and Plank pole
+
 ## [1.2.1] - 2026-10-04
 
 ### Fixed

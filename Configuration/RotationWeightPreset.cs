@@ -1,8 +1,7 @@
 namespace DeftHands.Configuration
 {
     /// <summary>
-    /// Strength of rotation weight simulation. Both presets use the same smoothing curve and
-    /// differ only in smooth time.
+    /// Selects how strongly held items feel weighted while rotating.
     /// </summary>
     public enum RotationWeightPreset
     {

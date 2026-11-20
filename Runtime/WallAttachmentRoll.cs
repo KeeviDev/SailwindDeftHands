@@ -6,11 +6,8 @@ namespace DeftHands.Runtime
 {
     /// <summary>
     /// Lets the player roll a held wall-attachable item around the axis pointing into the wall,
-    /// so it attaches at that angle instead of always upright. Roll input passes through a dead
-    /// zone at upright: the item stays upright while the input crosses it, then keeps turning.
-    /// Small items keep their roll here, on top of how the game holds them; big items rotate
-    /// freely, so their roll is read from their actual orientation. Items HooksHangMore manages
-    /// keep their roll in HooksHangMore instead, within its own range.
+    /// so it attaches at that angle. Roll input passes through a dead zone at upright: the item
+    /// stays upright while the input crosses it, then keeps turning.
     /// </summary>
     internal static class WallAttachmentRoll
     {
@@ -19,12 +16,9 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Items facing more steeply up or down than this face a ceiling, floor or tabletop rather
-        /// than a wall, where there's no upright to measure roll against.
+        /// than a wall.
         /// </summary>
         private const float MaxWallFacingY = 0.8f;
-
-        /// <summary>Roll, in degrees, within which an item counts as upright.</summary>
-        private const float UprightTolerance = 0.01f;
 
         private const float HalfDeadzone = UprightDeadzoneDegrees / 2f;
         private const float InputPeriod = 360f + UprightDeadzoneDegrees;
@@ -37,72 +31,63 @@ namespace DeftHands.Runtime
         /// </summary>
         private static float rollInput;
 
-        /// <summary>Whether a big item is being held upright by the dead zone.</summary>
-        private static bool isBigItemUpright;
-
-        /// <summary>A big item's roll input within the dead zone while it's held upright.</summary>
-        private static float uprightInput;
+        /// <summary>The dead zone that holds a big item upright while its roll turns through upright.</summary>
+        private static readonly Deadzone BigItemDeadzone = new Deadzone(UprightDeadzoneDegrees);
 
         /// <summary>
         /// The roll <see cref="RollHeldItem"/> last added to the small held item's rotation. An item
-        /// taken off a surface counts as already carrying its roll, so it eases into the hand from
-        /// exactly where it hung.
+        /// taken off a surface starts out counted as already carrying its roll.
         /// </summary>
         private static float heldItemRoll;
 
-        /// <summary>The component HooksHangMore keeps the held item's roll on, or null if it doesn't manage it.</summary>
-        private static Component hookSwingOwner;
-
         /// <summary>
-        /// The roll last written to HooksHangMore, used to detect when its own controls changed it.
+        /// The component HooksHangMore keeps the held hook's own turn on, or null if it doesn't turn it.
         /// </summary>
-        private static float lastWrittenSwing;
+        private static Component hookTurnOwner;
 
         /// <summary>
-        /// Whether the held item takes roll input: it's wall-attachable and Wall Attachment
-        /// Rotation is on, or HooksHangMore manages its roll.
+        /// Gets whether the held item currently takes roll input: it's wall-attachable and Wall Attachment Rotation is
+        /// on.
         /// </summary>
         public static bool IsActive =>
-            currentItem != null && (hookSwingOwner != null || ModConfig.WallAttachmentRotationEnabled.Value);
+            currentItem != null
+            && currentItem.wallAttachment
+            && ModConfig.WallAttachmentRotationEnabled.Value;
 
         /// <summary>
-        /// Starts tracking the held item if it's wall-attachable. A small item taken off a surface
-        /// starts at the roll that would attach it back the same way, other small items start
-        /// upright; a big item keeps its own orientation. The previously tracked item gets back
-        /// any roll taken off it earlier in the frame, so a dropped item doesn't show a frame
-        /// without it.
+        /// Starts tracking the held item. A small item that's wall-attachable when picked up starts at the roll that
+        /// would attach it back the same way if it takes the pose it hung with, and upright otherwise. The previously
+        /// tracked item gets back any roll taken off it earlier in the frame.
         /// </summary>
         /// <param name="item">The item now held, or null if nothing is held.</param>
-        /// <param name="wasAttached">Whether the item was attached to a surface when picked up.</param>
-        public static void SetCurrentItem(PickupableItem item, bool wasAttached)
+        /// <param name="takesHungPose">Whether the item, taken off a surface, takes the pose it hung with.</param>
+        public static void SetCurrentItem(PickupableItem item, bool takesHungPose)
         {
             if (currentItem != null)
                 RollHeldItem(currentItem);
 
-            currentItem = item is ShipItem shipItem && shipItem.wallAttachment ? shipItem : null;
+            currentItem = item as ShipItem;
             rollInput = 0f;
-            uprightInput = 0f;
-            isBigItemUpright = false;
-            hookSwingOwner = null;
+            BigItemDeadzone.Restart(false);
+            hookTurnOwner = null;
             heldItemRoll = 0f;
 
-            if (currentItem == null)
+            if (currentItem == null || !currentItem.wallAttachment)
                 return;
 
             if (currentItem.big)
             {
                 Vector3 up = AttachmentSpace.UpInWorld(currentItem);
-                isBigItemUpright = FacesWall(currentItem.transform.forward, up) && IsUpright(MeasureRoll(currentItem.transform.rotation, up));
+                BigItemDeadzone.Restart(
+                    FacesWall(currentItem.transform.forward, up)
+                    && Deadzone.IsAtRest(MeasureRoll(currentItem.transform.rotation, up)));
                 return;
             }
 
-            hookSwingOwner = HooksHangMoreCompat.GetSwingOwner(currentItem);
-            if (hookSwingOwner != null)
-            {
-                lastWrittenSwing = HooksHangMoreCompat.GetSwing(hookSwingOwner);
-                rollInput = RollToInput(lastWrittenSwing);
-            }
-            else if (wasAttached)
+            hookTurnOwner = HooksHangMoreCompat.GetTurnOwner(currentItem);
+            if (TakesOverHook(currentItem))
+                HooksHangMoreCompat.ClearTurn(hookTurnOwner);
+            if (takesHungPose)
             {
                 rollInput = RollToInput(ReadAttachedRoll(currentItem));
                 heldItemRoll = InputToRoll(rollInput);
@@ -110,28 +95,88 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Adds roll input for a small item: a full turn either way, or HooksHangMore's own range
-        /// for items it manages.
+        /// Adds roll input for a small item, a full turn either way.
         /// </summary>
         /// <param name="degrees">Roll input to add; positive turns counterclockwise as seen facing the wall.</param>
         public static void AddRollInput(float degrees)
         {
-            if (hookSwingOwner != null)
-                AddHookSwingInput(degrees);
+            rollInput = Mathf.Repeat(rollInput + degrees + InputPeriod / 2f, InputPeriod) - InputPeriod / 2f;
+        }
+
+        /// <summary>
+        /// Returns whether Deft Hands turns the held <paramref name="item"/> itself in place of HooksHangMore's turn:
+        /// it is a hook HooksHangMore turns, and Wall Attachment Rotation is on or
+        /// <see cref="WallPlacement.TurnsItemsOnWall"/>.
+        /// </summary>
+        public static bool TakesOverHook(ShipItem item)
+        {
+            return IsTurnedHook(item)
+                && (ModConfig.WallAttachmentRotationEnabled.Value || WallPlacement.TurnsItemsOnWall);
+        }
+
+        /// <summary>
+        /// Returns whether Deft Hands works out where the held <paramref name="item"/> attaches itself: it is a hook
+        /// HooksHangMore turns, and Easy Wall Hanging is on and runs or <see cref="TakesOverHook"/>.
+        /// </summary>
+        public static bool AimsHook(ShipItem item)
+        {
+            return IsTurnedHook(item) && (FeatureGuard.IsOn(ModConfig.EasyWallHanging) || TakesOverHook(item));
+        }
+
+        /// <summary>
+        /// Returns the turn, in degrees, HooksHangMore's own controls gave the held hook <paramref name="item"/>, or
+        /// none while <see cref="TakesOverHook"/>.
+        /// </summary>
+        /// <param name="item">A hook <see cref="AimsHook"/> is true for.</param>
+        public static float GetHookTurn(ShipItem item)
+        {
+            return TakesOverHook(item) ? 0f : HooksHangMoreCompat.GetTurn(hookTurnOwner);
+        }
+
+        private static bool IsTurnedHook(ShipItem item)
+        {
+            return ReferenceEquals(item, currentItem) && !ReferenceEquals(hookTurnOwner, null);
+        }
+
+        /// <summary>
+        /// Moves the turn HooksHangMore's own controls gave the held hook into the hook's roll, on its surface while
+        /// <see cref="WallPlacement.TurnsItemsOnWall"/>, and sets HooksHangMore's turn back to none, while
+        /// <see cref="TakesOverHook"/>.
+        /// </summary>
+        public static void TakeHookTurn()
+        {
+            if (!TakesOverHook(currentItem))
+                return;
+
+            float turn = HooksHangMoreCompat.GetTurn(hookTurnOwner);
+            if (turn == 0f)
+                return;
+
+            HooksHangMoreCompat.ClearTurn(hookTurnOwner);
+            if (WallPlacement.TurnsItemsOnWall)
+                WallAttachmentAdjustment.AddRoll(turn);
             else
-                rollInput = Mathf.Repeat(rollInput + degrees + InputPeriod / 2f, InputPeriod) - InputPeriod / 2f;
+                AddRollInput(turn);
+        }
+
+        /// <summary>
+        /// Resets the held item's roll to upright.
+        /// </summary>
+        public static void ResetRoll()
+        {
+            rollInput = 0f;
+            BigItemDeadzone.Restart(false);
         }
 
         /// <summary>
         /// Drops roll input left inside the dead zone, so the next rotation starts from its centre.
-        /// Input beyond the dead zone is kept.
         /// </summary>
         public static void RecenterDeadzone()
         {
             if (Mathf.Abs(rollInput) <= HalfDeadzone)
                 rollInput = 0f;
 
-            uprightInput = 0f;
+            BigItemDeadzone.Recenter();
         }
 
         /// <summary>
@@ -143,30 +188,23 @@ namespace DeftHands.Runtime
             Vector3 up = AttachmentSpace.UpInWorld(currentItem);
             if (!FacesWall(item.forward, up))
             {
-                isBigItemUpright = false;
+                BigItemDeadzone.Restart(false);
                 item.Rotate(axis, degrees, Space.World);
                 return;
             }
 
-            if (isBigItemUpright)
-            {
-                float input = uprightInput + degrees;
-                if (Mathf.Abs(input) <= HalfDeadzone)
-                {
-                    uprightInput = input;
-                    return;
-                }
-
-                isBigItemUpright = false;
-                item.Rotate(axis, input - Mathf.Sign(input) * HalfDeadzone, Space.World);
+            float turn = BigItemDeadzone.Take(degrees, out bool leftUpright);
+            if (turn == 0f)
                 return;
-            }
 
             float rollBefore = MeasureRoll(item.rotation, up);
-            item.Rotate(axis, degrees, Space.World);
-            float rollAfter = MeasureRoll(item.rotation, up);
-            if (CrossedUpright(rollBefore, rollAfter))
-                EnterDeadzone(item, up, rollBefore, Mathf.Abs(rollAfter));
+            item.Rotate(axis, turn, Space.World);
+            if (leftUpright)
+                return;
+
+            float correction = BigItemDeadzone.Settle(rollBefore, MeasureRoll(item.rotation, up));
+            if (correction != 0f)
+                item.Rotate(item.forward, correction, Space.World);
         }
 
         /// <summary>
@@ -175,14 +213,14 @@ namespace DeftHands.Runtime
         /// </summary>
         public static void HoldBigItemUpright(Transform item)
         {
-            if (!isBigItemUpright)
+            if (!BigItemDeadzone.IsHolding)
                 return;
 
             Vector3 up = AttachmentSpace.UpInWorld(currentItem);
             if (FacesWall(item.forward, up))
                 SetRoll(item, up, 0f);
             else
-                isBigItemUpright = false;
+                BigItemDeadzone.Restart(false);
         }
 
         /// <summary>
@@ -194,7 +232,7 @@ namespace DeftHands.Runtime
         /// <returns>True if <paramref name="attachRot"/> was changed.</returns>
         public static bool TryRollAttachment(ShipItem item, Vector3 attachPos, ref Quaternion attachRot)
         {
-            if (!IsActive || item != currentItem || hookSwingOwner != null)
+            if (!IsActive || item != currentItem)
                 return false;
 
             Quaternion heldRotation = AttachmentSpace.ToAttachmentSpace(item, item.transform.rotation);
@@ -219,10 +257,8 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Takes the roll <see cref="RollHeldItem"/> added last frame back off the held item, so
-        /// the holding GoPointer eases it into the hand from its unrolled pose instead of
-        /// compounding the roll during the pickup animation. Must be called before the GoPointer
-        /// positions it for the frame.
+        /// Takes the roll <see cref="RollHeldItem"/> added last frame back off the held item. Must
+        /// be called before the holding GoPointer positions it for the frame.
         /// </summary>
         public static void UnrollHeldItem(PickupableItem item)
         {
@@ -243,7 +279,7 @@ namespace DeftHands.Runtime
             if (currentItem == null || item != currentItem)
                 return;
 
-            bool rollsInHand = IsActive && !currentItem.big && hookSwingOwner == null;
+            bool rollsInHand = IsActive && !currentItem.big;
             float roll = rollsInHand ? InputToRoll(rollInput) : 0f;
             if (roll != heldItemRoll)
                 item.transform.rotation *= Quaternion.AngleAxis(roll - heldItemRoll, Vector3.forward);
@@ -252,53 +288,8 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Adds roll input for an item HooksHangMore manages, clamped so the roll stays within
-        /// its range. Picks up any change HooksHangMore's own controls made in the meantime.
-        /// </summary>
-        private static void AddHookSwingInput(float degrees)
-        {
-            float swing = HooksHangMoreCompat.GetSwing(hookSwingOwner);
-            if (swing != lastWrittenSwing)
-                rollInput = RollToInput(swing);
-
-            float maxInput = HooksHangMoreCompat.MaxSwing + HalfDeadzone;
-            rollInput = Mathf.Clamp(rollInput + degrees, -maxInput, maxInput);
-            lastWrittenSwing = InputToRoll(rollInput);
-            HooksHangMoreCompat.SetSwing(hookSwingOwner, lastWrittenSwing);
-        }
-
-        /// <summary>
-        /// Handles a big item's roll crossing upright: holds it there if the roll that went past
-        /// upright is still within the dead zone, otherwise sets it to the roll left beyond it.
-        /// </summary>
-        /// <param name="rollBefore">The roll before crossing, which gives the side it came from.</param>
-        /// <param name="overshoot">How far the roll went past upright.</param>
-        /// <param name="up">Visible-world direction that's up in attachment space.</param>
-        private static void EnterDeadzone(Transform item, Vector3 up, float rollBefore, float overshoot)
-        {
-            float input = Mathf.Sign(rollBefore) * (HalfDeadzone - overshoot);
-            if (Mathf.Abs(input) <= HalfDeadzone)
-            {
-                SetRoll(item, up, 0f);
-                isBigItemUpright = true;
-                uprightInput = input;
-            }
-            else
-            {
-                SetRoll(item, up, -Mathf.Sign(rollBefore) * (overshoot - UprightDeadzoneDegrees));
-            }
-        }
-
-        private static bool CrossedUpright(float rollBefore, float rollAfter)
-        {
-            bool nearUpright = Mathf.Abs(rollBefore) < 90f && Mathf.Abs(rollAfter) < 90f;
-            return nearUpright && (IsUpright(rollAfter) || Mathf.Sign(rollBefore) != Mathf.Sign(rollAfter));
-        }
-
-        /// <summary>
         /// Returns the roll a small item taken off a surface should be held at to attach back the
-        /// way it was. On a ceiling or floor that's relative to the current view. Works in
-        /// attachment space, where the item's physics body sits.
+        /// way it was. On a ceiling or floor that's relative to the current view.
         /// </summary>
         private static float ReadAttachedRoll(ShipItem item)
         {
@@ -368,14 +359,13 @@ namespace DeftHands.Runtime
             item.Rotate(item.forward, roll - MeasureRoll(item.rotation, up), Space.World);
         }
 
-        private static bool FacesWall(Vector3 forward, Vector3 up)
+        /// <summary>
+        /// Returns whether an item facing <paramref name="forward"/> faces a wall rather than a ceiling, floor or
+        /// tabletop, with <paramref name="up"/> as up.
+        /// </summary>
+        public static bool FacesWall(Vector3 forward, Vector3 up)
         {
             return Mathf.Abs(Vector3.Dot(forward, up)) <= MaxWallFacingY;
-        }
-
-        private static bool IsUpright(float roll)
-        {
-            return Mathf.Abs(roll) < UprightTolerance;
         }
 
         private static float InputToRoll(float input)
@@ -385,7 +375,7 @@ namespace DeftHands.Runtime
 
         private static float RollToInput(float roll)
         {
-            return IsUpright(roll) ? 0f : roll + Mathf.Sign(roll) * HalfDeadzone;
+            return Deadzone.IsAtRest(roll) ? 0f : roll + Mathf.Sign(roll) * HalfDeadzone;
         }
     }
 }

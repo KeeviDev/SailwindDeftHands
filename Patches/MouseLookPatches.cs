@@ -1,31 +1,39 @@
 using DeftHands.Configuration;
 using DeftHands.Runtime;
 using HarmonyLib;
+using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 
 namespace DeftHands.Patches
 {
     /// <summary>
-    /// Blocks camera rotation while the player is mouse-rotating a held item, so dragging the
-    /// mouse rotates the item instead of also turning the camera.
+    /// Blocks camera rotation while the player is mouse-rotating a held item.
     /// </summary>
     [HarmonyPatch(typeof(MouseLook), "Update")]
     public static class DisableCameraRotationPatch
     {
         public static bool Prefix()
         {
-            return !RotationHandler.GetInstance().IsRotating;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return true;
+
+            try
+            {
+                return !RotationHandler.GetInstance().IsRotating;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return true;
+            }
         }
     }
 
     /// <summary>
-    /// Lets the camera turn while the built-in Q axis key is held once Legacy Rotation Control
-    /// is off and Q no longer rotates items.
+    /// Lets the camera turn while the built-in Q axis key is held, except while
+    /// <see cref="GameRotation.KeepsRotateKey"/>.
     /// </summary>
-    /// <remarks>
-    /// Forces MouseLook.Update's Q-key check, which otherwise returns early, to false.
-    /// </remarks>
     [HarmonyPatch(typeof(MouseLook), "Update")]
     public static class MouseLookRotateHUnblockPatch
     {
@@ -60,7 +68,18 @@ namespace DeftHands.Patches
 
         private static bool MaskRotateHCheck(bool original)
         {
-            return ModConfig.LegacyRotationEnabled.Value && original;
+            if (!FeatureGuard.IsRunning(FeatureGuard.Core))
+                return original;
+
+            try
+            {
+                return GameRotation.KeepsRotateKey && original;
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+                return original;
+            }
         }
     }
 }

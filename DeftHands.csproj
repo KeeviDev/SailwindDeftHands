@@ -97,26 +97,80 @@
       <HintPath>..\lib\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>..\lib\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>..\lib\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Plugin.cs" />
+    <Compile Include="Configuration\FeatureGuard.cs" />
     <Compile Include="Configuration\ModConfig.cs" />
     <Compile Include="Configuration\ModInput.cs" />
+    <Compile Include="Configuration\PushPullMode.cs" />
     <Compile Include="Configuration\RotationWeightPreset.cs" />
+    <Compile Include="Configuration\TiltLock.cs" />
     <Compile Include="Runtime\RotationHandler.cs" />
+    <Compile Include="Runtime\RotationInertia.cs" />
+    <Compile Include="Runtime\BigItemRotation.cs" />
+    <Compile Include="Runtime\GameRotation.cs" />
     <Compile Include="Runtime\PushPullHandler.cs" />
+    <Compile Include="Runtime\PutDownMemory.cs" />
+    <Compile Include="Runtime\HoldDepth.cs" />
+    <Compile Include="Runtime\ExtendedHold.cs" />
+    <Compile Include="Runtime\HeldItemVisibility.cs" />
+    <Compile Include="Runtime\CompassAlignment.cs" />
+    <Compile Include="Runtime\CompassCourseHint.cs" />
     <Compile Include="Runtime\WallAttachmentRoll.cs" />
+    <Compile Include="Runtime\WallAttachmentAdjustment.cs" />
+    <Compile Include="Runtime\Deadzone.cs" />
+    <Compile Include="Runtime\HungItemPose.cs" />
+    <Compile Include="Runtime\HungSurfaceFinder.cs" />
+    <Compile Include="Runtime\HungPickupHint.cs" />
+    <Compile Include="Runtime\HeldItemAside.cs" />
+    <Compile Include="Runtime\ItemBoxRiders.cs" />
+    <Compile Include="Runtime\ItemParts.cs" />
+    <Compile Include="Runtime\WallAttachmentAim.cs" />
+    <Compile Include="Runtime\WallPlacement.cs" />
+    <Compile Include="Runtime\PreviewTopArrow.cs" />
+    <Compile Include="Runtime\CompassCourseKeeper.cs" />
+    <Compile Include="Runtime\FurniturePlacement.cs" />
+    <Compile Include="Runtime\ItemShape.cs" />
+    <Compile Include="Runtime\SurfaceAim.cs" />
+    <Compile Include="Runtime\PickupSurface.cs" />
+    <Compile Include="Runtime\PickupRotationMemory.cs" />
+    <Compile Include="Runtime\QuadrantInspection.cs" />
     <Compile Include="Runtime\AttachmentSpace.cs" />
+    <Compile Include="Runtime\GoPointerFields.cs" />
+    <Compile Include="Runtime\GoPointerTargeterFields.cs" />
+    <Compile Include="Runtime\RotationFrame.cs" />
+    <Compile Include="Runtime\BigItemFacing.cs" />
+    <Compile Include="Patches\BigItemFacingPatch.cs" />
+    <Compile Include="Runtime\RotationControlsHint.cs" />
+    <Compile Include="Patches\ControlsTextPatches.cs" />
+    <Compile Include="Patches\ModifierPickupClickPatch.cs" />
     <Compile Include="Patches\HeldItemTrackingPatches.cs" />
     <Compile Include="Patches\ScrollWheelPatch.cs" />
     <Compile Include="Patches\AltInteractionBlockPatches.cs" />
-    <Compile Include="Patches\LegacyRotationBlockPatch.cs" />
+    <Compile Include="Patches\HolderScrollPatch.cs" />
     <Compile Include="Patches\MouseLookPatches.cs" />
     <Compile Include="Patches\WallAttachmentPatches.cs" />
+    <Compile Include="Patches\WallAttachmentAimPatch.cs" />
+    <Compile Include="Patches\PreviewTopArrowPatch.cs" />
+    <Compile Include="Patches\ItemBoxPatch.cs" />
+    <Compile Include="Patches\HeldLikeBigPatch.cs" />
+    <Compile Include="Patches\FurniturePlacementPatches.cs" />
     <Compile Include="Patches\CargoPlacementOverridePatch.cs" />
     <Compile Include="Compat\NandTweaksCompat.cs" />
+    <Compile Include="Compat\KeeviFixesCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
+    <Compile Include="Utils\PersistentObject.cs" />
+    <Compile Include="Utils\VectorUtils.cs" />
     <Compile Include="Utils\PickupableItemUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

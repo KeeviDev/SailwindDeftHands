@@ -1,20 +1,20 @@
-using HarmonyLib;
-using System.Reflection;
+using DeftHands.Configuration;
+using DeftHands.Utils;
+using System;
 using UnityEngine;
 
 namespace DeftHands.Runtime
 {
     /// <summary>
-    /// Smooths Push/Pull On Scroll Wheel's distance changes so each scroll tick eases the held
-    /// item to its new distance instead of snapping it there. Adds each frame's share of the
-    /// movement to the affected fields' current values rather than writing a cached target,
-    /// since other code can modify them between frames. Pushing a big item hard against
-    /// something overpowers the game's push of it away from colliders (easy cargo placement)
-    /// until the push or pull ends.
+    /// Eases the held item to each distance Preferred Push/Pull Control requests over the following
+    /// frames. Adds each frame's share of the movement to the item's current distance rather than
+    /// writing a cached target, since other code can change it between frames.
     /// </summary>
     public class PushPullHandler : MonoBehaviour
     {
-        /// <summary>Approximate time the held item takes to ease to the distance requested by scrolling.</summary>
+        /// <summary>
+        /// Approximate time the held item takes to ease to the distance requested by scrolling, in seconds.
+        /// </summary>
         private const float SmoothTime = 0.12f;
 
         /// <summary>Remaining distance below which the rest is applied at once and smoothing stops.</summary>
@@ -31,15 +31,12 @@ namespace DeftHands.Runtime
 
         /// <summary>
         /// Push-back, in units per second taken off the push or pull, from which the game's push
-        /// away from colliders is overridden. Pushing fully against something is pushed back at
-        /// the push's own speed, and a single scroll tick peaks at about 0.38.
+        /// away from colliders is overridden.
         /// </summary>
         private const float PushOutOverrideStartRate = 0.7f;
 
         /// <summary>
-        /// Push-back below which the override stops, lower than
-        /// <see cref="PushOutOverrideStartRate"/> so the dips between ticks of steady scrolling
-        /// don't toggle it.
+        /// Push-back, in units per second, below which the override stops.
         /// </summary>
         private const float PushOutOverrideStopRate = 0.45f;
 
@@ -48,8 +45,6 @@ namespace DeftHands.Runtime
         private const float MinBigItemDistance = 1f;
         private const float MaxBigItemDistance = 3f;
 
-        private static readonly FieldInfo BigItemLocalPosField = AccessTools.Field(typeof(GoPointer), "bigItemLocalPos");
-        private static readonly FieldInfo DecolLocalPosField = AccessTools.Field(typeof(GoPointer), "decolLocalPos");
 
         private static PushPullHandler instance;
 
@@ -72,14 +67,14 @@ namespace DeftHands.Runtime
 
         private bool overridesPushOut;
 
+        /// <summary>Gets whether a push or pull is still easing the held item to its new distance.</summary>
+        public bool IsMoving => requestedOffset != appliedOffset;
+
         public static PushPullHandler GetInstance()
         {
             if (instance == null)
-            {
-                GameObject obj = new GameObject("DeftHands_PushPullHandler");
-                instance = obj.AddComponent<PushPullHandler>();
-                DontDestroyOnLoad(obj);
-            }
+                instance = PersistentObject.Create<PushPullHandler>();
+
             return instance;
         }
 
@@ -117,8 +112,7 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Registers the currently held item and discards any movement still in progress, so a
-        /// freshly picked up item doesn't inherit motion left over from the previous one.
+        /// Registers the currently held item and discards any movement still in progress.
         /// </summary>
         public void SetCurrentItem(PickupableItem item)
         {
@@ -127,27 +121,75 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
+        /// Drops any push or pull still easing the held item to its new distance.
+        /// </summary>
+        public void Stop()
+        {
+            ResetSmoothing();
+        }
+
+        /// <summary>
+        /// Stops the handler's updates and drops any push or pull still easing the held item.
+        /// </summary>
+        public static void Disable()
+        {
+            if (instance == null)
+                return;
+
+            instance.enabled = false;
+            instance.ResetSmoothing();
+        }
+
+        /// <summary>
+        /// Returns whether push and pull move the held <paramref name="item"/>: it is on no surface for items, neither
+        /// placed there by <see cref="FurniturePlacement.IsPlacing"/> nor shown there by the game
+        /// (<see cref="FurniturePlacement.IsShownByGame"/>).
+        /// </summary>
+        public static bool CanMove(PickupableItem item)
+        {
+            return item != null && !FurniturePlacement.IsPlacing(item) && !FurniturePlacement.IsShownByGame(item);
+        }
+
+        /// <summary>
         /// Queues a distance change for the held item, eased in over the following frames on
-        /// top of any movement still in progress.
+        /// top of any movement still in progress, while <see cref="CanMove"/>.
         /// </summary>
         /// <param name="delta">Distance to add; positive moves the item farther away.</param>
         public void Nudge(float delta)
         {
-            if (currentItem == null)
+            if (!CanMove(currentItem))
                 return;
 
             requestedOffset += delta;
         }
 
-        /// <summary>
-        /// Applies this frame's share of the queued movement. Discards whatever remains once a
-        /// distance limit is reached, so scrolling back responds immediately.
-        /// </summary>
         private void Update()
+        {
+            try
+            {
+                EaseHeldItem();
+            }
+            catch (Exception error)
+            {
+                FeatureGuard.ReportError(FeatureGuard.Core, error);
+            }
+        }
+
+        /// <summary>
+        /// Applies this frame's share of the queued movement. Discards whatever remains once a distance limit is
+        /// reached or <see cref="CanMove"/> turns false.
+        /// </summary>
+        private void EaseHeldItem()
         {
             if (currentItem == null || currentItem.held == null)
             {
                 SetCurrentItem(null);
+                return;
+            }
+
+            if (!CanMove(currentItem))
+            {
+                ResetSmoothing();
                 return;
             }
 
@@ -175,49 +217,44 @@ namespace DeftHands.Runtime
         }
 
         /// <summary>
-        /// Moves the held item closer or farther, within the distance limits for its kind of item.
+        /// Moves the held item closer or farther, within the distance limits for its kind of item, holding a small item
+        /// like a big item first when it can be.
         /// </summary>
         /// <param name="step">Distance to add; positive moves the item farther away.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
         private bool MoveHeldItem(float step)
         {
+            if (GoPointerFields.BigItemLocalPos != null && GoPointerFields.DecolLocalPos != null
+                && ExtendedHold.GetInstance().TryHoldLikeBig(currentItem))
+                return MoveBigItem(step);
+
             float requestedHoldDistance = currentItem.holdDistance + step;
-            currentItem.holdDistance = ClampTowardRange(currentItem.holdDistance, requestedHoldDistance, MinHoldDistance, MaxHoldDistance);
-            bool isWithinLimits = currentItem.holdDistance == requestedHoldDistance;
-
-            if (currentItem.big && BigItemLocalPosField != null && DecolLocalPosField != null)
-                isWithinLimits = MoveBigItem(step);
-
-            return isWithinLimits;
+            currentItem.holdDistance = ClampTowardRange(
+                currentItem.holdDistance, requestedHoldDistance, MinHoldDistance, MaxHoldDistance);
+            return currentItem.holdDistance == requestedHoldDistance;
         }
 
         /// <summary>
-        /// Moves a big item's actual position (the holding GoPointer's decolLocalPos) and brings its
-        /// intended position (bigItemLocalPos) to the same depth. Without that, the game pushing
-        /// the item back from a collider would leave the intended position beyond the obstacle,
-        /// using up the distance limit and making the item jump through the obstacle when the
-        /// player looks around.
+        /// Moves the actual position of an item held like a big item (the holding GoPointer's decolLocalPos) and brings
+        /// its intended position (bigItemLocalPos) to the same depth, within the distance limits for its kind of item.
         /// </summary>
         /// <param name="step">Distance to add to the depth.</param>
         /// <returns>False if a distance limit cut the move short.</returns>
         private bool MoveBigItem(float step)
         {
-            Vector3 actual = (Vector3)DecolLocalPosField.GetValue(currentItem.held);
+            ref Vector3 actual = ref GoPointerFields.DecolLocalPos(currentItem.held);
             float requestedDepth = actual.z + step;
-            actual.z = ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance);
-            DecolLocalPosField.SetValue(currentItem.held, actual);
-
-            Vector3 intended = (Vector3)BigItemLocalPosField.GetValue(currentItem.held);
-            intended.z = actual.z;
-            BigItemLocalPosField.SetValue(currentItem.held, intended);
+            actual.z = currentItem.big
+                ? ClampTowardRange(actual.z, requestedDepth, MinBigItemDistance, MaxBigItemDistance)
+                : ClampTowardRange(actual.z, requestedDepth, MinHoldDistance, MaxHoldDistance);
+            GoPointerFields.BigItemLocalPos(currentItem.held).z = actual.z;
 
             return actual.z == requestedDepth;
         }
 
         /// <summary>
-        /// Clamps <paramref name="requested"/> to [<paramref name="min"/>, <paramref name="max"/>],
-        /// widened to include <paramref name="current"/>, so a value already outside the range can
-        /// move back toward it without jumping to the nearest limit.
+        /// Clamps <paramref name="requested"/> to [<paramref name="min"/>, <paramref name="max"/>]
+        /// widened to include <paramref name="current"/>.
         /// </summary>
         private static float ClampTowardRange(float current, float requested, float min, float max)
         {

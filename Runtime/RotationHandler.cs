@@ -65,11 +65,8 @@ namespace DeftHands.Runtime
         public static RotationHandler GetInstance()
         {
             if (instance == null)
-            {
-                GameObject obj = new GameObject("DeftHands_RotationHandler");
-                instance = obj.AddComponent<RotationHandler>();
-                DontDestroyOnLoad(obj);
-            }
+                instance = PersistentObject.Create<RotationHandler>();
+
             return instance;
         }
 

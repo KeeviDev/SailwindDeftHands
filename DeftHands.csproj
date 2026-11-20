@@ -132,6 +132,7 @@
     <Compile Include="Compat\NandTweaksCompat.cs" />
     <Compile Include="Compat\HooksHangMoreCompat.cs" />
     <Compile Include="Utils\ReflectionUtils.cs" />
+    <Compile Include="Utils\PersistentObject.cs" />
     <Compile Include="Utils\PickupableItemUtils.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

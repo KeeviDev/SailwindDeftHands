@@ -1,3 +1,4 @@
+using DeftHands.Utils;
 using UnityEngine;
 
 namespace DeftHands.Runtime
@@ -67,11 +68,8 @@ namespace DeftHands.Runtime
         public static PushPullHandler GetInstance()
         {
             if (instance == null)
-            {
-                GameObject obj = new GameObject("DeftHands_PushPullHandler");
-                instance = obj.AddComponent<PushPullHandler>();
-                DontDestroyOnLoad(obj);
-            }
+                instance = PersistentObject.Create<PushPullHandler>();
+
             return instance;
         }
 
